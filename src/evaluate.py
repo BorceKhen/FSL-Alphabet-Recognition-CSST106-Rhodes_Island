@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import platform
 import time
 from typing import Dict
 
@@ -67,6 +68,9 @@ def _compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict:
 
 
 def _benchmark_svm_latency(svm_pipe, X_sample: np.ndarray, n_iters: int = 500) -> float:
+    # Warm-up run
+    for i in range(20):
+        svm_pipe.predict_proba(X_sample[i % len(X_sample) : (i % len(X_sample)) + 1])
     t0 = time.perf_counter()
     for i in range(n_iters):
         svm_pipe.predict_proba(X_sample[i % len(X_sample) : (i % len(X_sample)) + 1])
@@ -77,6 +81,9 @@ def _benchmark_mlp_latency(model: FSLDeepMLP, X_scaled: np.ndarray, n_iters: int
     model.eval()
     tensor_samples = torch.from_numpy(X_scaled.astype(np.float32))
     with torch.no_grad():
+        # Warm-up run
+        for i in range(50):
+            _ = model(tensor_samples[i % len(tensor_samples) : (i % len(tensor_samples)) + 1])
         t0 = time.perf_counter()
         for i in range(n_iters):
             _ = model(tensor_samples[i % len(tensor_samples) : (i % len(tensor_samples)) + 1])
@@ -118,11 +125,13 @@ def main() -> None:
     X_test_scaled = mlp_scaler.transform(X_test).astype(np.float32)
     with torch.no_grad():
         logits = mlp_model(torch.from_numpy(X_test_scaled))
-        mlp_pred = logits.argmax(dim=1).numpy()
+        mlp_probs = torch.softmax(logits, dim=1).numpy()
+        mlp_pred = mlp_probs.argmax(axis=1)
 
     mlp_metrics = _compute_metrics(y_test, mlp_pred)
     mlp_metrics["cpu_latency_ms"] = round(_benchmark_mlp_latency(mlp_model, X_test_scaled), 3)
     results["deep_mlp"] = mlp_metrics
+    results["machine"] = f"{platform.system()} ({platform.processor() or platform.machine()})"
     _save_confusion_matrix(
         y_test,
         mlp_pred,
@@ -130,11 +139,24 @@ def main() -> None:
         REPORTS_DIR / "confusion_matrix_mlp.png",
     )
 
+    # Save detailed test-set misclassifications for error analysis
+    errors = []
+    for idx in range(len(y_test)):
+        if mlp_pred[idx] != y_test[idx]:
+            errors.append({
+                "test_index": int(idx),
+                "true_label": CLASSES[int(y_test[idx])],
+                "pred_label": CLASSES[int(mlp_pred[idx])],
+                "pred_confidence": round(float(mlp_probs[idx, mlp_pred[idx]]), 4),
+                "true_confidence": round(float(mlp_probs[idx, y_test[idx]]), 4),
+            })
+    (REPORTS_DIR / "test_errors_mlp.json").write_text(json.dumps(errors, indent=2), encoding="utf-8")
+
     (REPORTS_DIR / "evaluation_metrics.json").write_text(
         json.dumps(results, indent=2), encoding="utf-8"
     )
 
-    print("\n=== Test Set Evaluation Summary ===")
+    print(f"\n=== Test Set Evaluation Summary ({results['machine']}) ===")
     for name in ("svm_baseline", "deep_mlp"):
         m = results[name]
         print(
@@ -142,6 +164,8 @@ def main() -> None:
             f"| Prec={m['macro_precision']:.4f} | Rec={m['macro_recall']:.4f} "
             f"| Latency={m['cpu_latency_ms']:.3f} ms"
         )
+    print(f"\nDeep MLP Per-Class Classification Report (Test Set, n={len(y_test)}):")
+    print(classification_report(y_test, mlp_pred, target_names=CLASSES, digits=3, zero_division=0))
 
 
 if __name__ == "__main__":

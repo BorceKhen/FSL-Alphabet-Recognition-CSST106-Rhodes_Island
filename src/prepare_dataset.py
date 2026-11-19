@@ -23,28 +23,6 @@ from src.config import (
 from src.features import HandLandmarkExtractor
 
 
-def _extract_with_fallback(extractor: HandLandmarkExtractor, img: np.ndarray) -> np.ndarray | None:
-    """Try standard extraction, then padded border + CLAHE fallback for tight crops/low contrast."""
-    vec, _ = extractor.extract(img, use_clahe=False)
-    if vec is not None:
-        return vec
-
-    vec, _ = extractor.extract(img, use_clahe=True)
-    if vec is not None:
-        return vec
-
-    # Tightly cropped hand images often need margin around the wrist/fingertips
-    h, w = img.shape[:2]
-    pad_y, pad_x = int(h * 0.2), int(w * 0.2)
-    padded = cv2.copyMakeBorder(img, pad_y, pad_y, pad_x, pad_x, cv2.BORDER_REPLICATE)
-    vec, _ = extractor.extract(padded, use_clahe=False)
-    if vec is not None:
-        return vec
-
-    vec, _ = extractor.extract(padded, use_clahe=True)
-    return vec
-
-
 def main() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
@@ -70,7 +48,7 @@ def main() -> None:
                 if img is None:
                     failed += 1
                     continue
-                vec = _extract_with_fallback(extractor, img)
+                vec, _, _ = extractor.extract_with_fallback(img)
                 if vec is not None:
                     features.append(vec)
                     labels.append(class_idx)

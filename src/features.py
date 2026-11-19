@@ -137,6 +137,40 @@ class HandLandmarkExtractor:
         landmarks = result.hand_landmarks[0]
         return normalize_landmarks(landmarks), landmarks
 
+    def extract_with_fallback(
+        self,
+        bgr_image: np.ndarray,
+        use_clahe: bool = False,
+    ) -> Tuple[Optional[np.ndarray], Optional[Sequence], np.ndarray]:
+        """Try standard extraction, CLAHE, and 20% border padding for tight crops/low contrast.
+
+        Returns (63-dim vector, landmarks, processed_image_used).
+        """
+        base = apply_clahe(bgr_image) if use_clahe else bgr_image
+        vec, lms = self.extract(base, use_clahe=False)
+        if vec is not None:
+            return vec, lms, base
+
+        if not use_clahe:
+            clahe_img = apply_clahe(bgr_image)
+            vec, lms = self.extract(clahe_img, use_clahe=False)
+            if vec is not None:
+                return vec, lms, clahe_img
+
+        h, w = base.shape[:2]
+        pad_y, pad_x = int(h * 0.2), int(w * 0.2)
+        padded = cv2.copyMakeBorder(base, pad_y, pad_y, pad_x, pad_x, cv2.BORDER_REPLICATE)
+        vec, lms = self.extract(padded, use_clahe=False)
+        if vec is not None:
+            return vec, lms, padded
+
+        padded_clahe = apply_clahe(padded)
+        vec, lms = self.extract(padded_clahe, use_clahe=False)
+        if vec is not None:
+            return vec, lms, padded_clahe
+
+        return None, None, base
+
     def close(self) -> None:
         self._landmarker.close()
 
