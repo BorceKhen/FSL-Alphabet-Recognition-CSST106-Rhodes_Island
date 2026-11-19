@@ -1,0 +1,7 @@
+{
+  "model": "Baseline RBF-SVM (C=50.0, gamma=0.05)",
+  "split": "validation",
+  "num_samples": 1752,
+  "val_accuracy": 0.984,
+  "val_macro_f1": 0.984
+}
