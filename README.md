@@ -125,10 +125,12 @@ FSL/
 
 ## Team & Contributions
 
-| Module / Area | Scope | Member / Role |
+**Team Members**: John Benedict M. Hornilla, Johann Francois P. Tanyag, Ron Ken S. Borce
+
+| Module / Area | Scope | Member(s) / Role |
 | :--- | :--- | :--- |
-| Data & Preprocessing Pipeline | Dataset structuring, MediaPipe 21-keypoint extraction, 63-dim normalization | Lead ML Engineer |
-| Model Development & Training | Baseline RBF-SVM & augmented Deep MLP training and hyperparameter tuning | ML / CV Specialist |
-| Post-Processing & Logic | Confidence thresholding (`0.75`), 10-frame smoothing, `1.0 s` dwell-time buffer | Backend Developer |
-| Real-Time UI & Integration | Flask Web UI (`src/web_app.py`), CLI (`src/run.py`) & PyQt6 UI (`src/app.py`) | Full-Stack / UI Developer |
-| Evaluation & Documentation | Benchmark testing, confusion matrices, final report & defense slides | Systems Lead / Technical Writer |
+| Data & Preprocessing Pipeline | Dataset structuring, MediaPipe 21-keypoint extraction, 63-dim normalization | John Benedict M. Hornilla, Johann Francois P. Tanyag, Ron Ken S. Borce (Lead ML / Data) |
+| Model Development & Training | Baseline RBF-SVM & augmented Deep MLP training and hyperparameter tuning | Ron Ken S. Borce, John Benedict M. Hornilla (ML / CV Specialist) |
+| Post-Processing & Logic | Confidence thresholding (`0.75`), 10-frame smoothing, `1.0 s` dwell-time buffer | Johann Francois P. Tanyag, Ron Ken S. Borce (Backend Developer) |
+| Real-Time UI & Integration | Flask Web UI (`src/web_app.py`), CLI (`src/run.py`) & PyQt6 UI (`src/app.py`) | Ron Ken S. Borce, John Benedict M. Hornilla, Johann Francois P. Tanyag (Full-Stack / UI) |
+| Evaluation & Documentation | Benchmark testing, confusion matrices, final report & defense slides | All Members (Systems & Technical Writing) |
