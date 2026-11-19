@@ -4,6 +4,7 @@
   const ctx = overlay.getContext("2d");
   const placeholder = document.getElementById("cameraPlaceholder");
   const toggleCamBtn = document.getElementById("toggleCamBtn");
+  const imageUploadInput = document.getElementById("imageUploadInput");
   const statusBanner = document.getElementById("statusBanner");
 
   const modelSelect = document.getElementById("modelSelect");
@@ -276,6 +277,79 @@
   toggleCamBtn.addEventListener("click", () => {
     if (running) stopCamera();
     else startCamera();
+  });
+
+  imageUploadInput.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (running) stopCamera();
+
+    const img = new Image();
+    img.onload = async () => {
+      placeholder.style.display = "none";
+      captureCtx.clearRect(0, 0, captureCanvas.width, captureCanvas.height);
+      const scale = Math.min(captureCanvas.width / img.width, captureCanvas.height / img.height);
+      const dw = img.width * scale;
+      const dh = img.height * scale;
+      const dx = (captureCanvas.width - dw) / 2;
+      const dy = (captureCanvas.height - dh) / 2;
+      captureCtx.fillStyle = "#090d12";
+      captureCtx.fillRect(0, 0, captureCanvas.width, captureCanvas.height);
+      captureCtx.drawImage(img, dx, dy, dw, dh);
+
+      // Draw uploaded image onto overlay, then draw landmarks on top after response
+      const dataUrl = captureCanvas.toDataURL("image/jpeg", 0.92);
+      const res = await fetch("/api/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: dataUrl,
+          model: modelSelect.value,
+          clahe: claheToggle.checked,
+          auto_space: false,
+        }),
+      });
+      const data = await res.json();
+
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+      ctx.drawImage(captureCanvas, 0, 0, overlay.width, overlay.height);
+      if (skeletonToggle.checked && data.landmarks && data.landmarks.length > 0) {
+        const w = overlay.width;
+        const h = overlay.height;
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#38bdf8";
+        for (const [a, b] of connections) {
+          ctx.beginPath();
+          ctx.moveTo(data.landmarks[a][0] * w, data.landmarks[a][1] * h);
+          ctx.lineTo(data.landmarks[b][0] * w, data.landmarks[b][1] * h);
+          ctx.stroke();
+        }
+        data.landmarks.forEach((pt, idx) => {
+          ctx.beginPath();
+          ctx.arc(pt[0] * w, pt[1] * h, idx === 0 ? 5 : 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = idx === 0 ? "#38bdf8" : "#ffffff";
+          ctx.fill();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = "#38bdf8";
+          ctx.stroke();
+        });
+      }
+
+      if (data.hand_detected) setStatus("Image Evaluated", "status-ok");
+      else setStatus("No hand detected in uploaded image", "status-warn");
+
+      renderTop3(data.top3 || []);
+      const activeChar = data.raw_label || "-";
+      const aboveThreshold = (data.raw_confidence || 0) * 100 >= threshold;
+      detectedLetter.textContent = activeChar;
+      detectedBox.classList.toggle("above-threshold", Boolean(data.hand_detected && aboveThreshold));
+      highlightCheatTile(data.raw_label, aboveThreshold);
+      latencyHud.textContent = `Latency: ${data.latency_ms} ms`;
+      fpsHud.textContent = "Mode: Image";
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(file);
+    imageUploadInput.value = "";
   });
 
   cameraSelect.addEventListener("change", () => {

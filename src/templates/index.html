@@ -97,7 +97,13 @@
       </div>
 
       <div class="camera-footer">
-        <button id="toggleCamBtn" class="btn btn-primary">Start Camera</button>
+        <div class="camera-btn-group">
+          <button id="toggleCamBtn" class="btn btn-primary">Start Camera</button>
+          <label class="btn btn-slate upload-btn">
+            <span>Upload Image</span>
+            <input type="file" id="imageUploadInput" accept="image/*" hidden />
+          </label>
+        </div>
         <label class="switch-label">
           <input type="checkbox" id="mirrorToggle" class="switch-input" checked />
           <span class="switch-pill"></span>

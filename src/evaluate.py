@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import platform
 import time
+from pathlib import Path
 from typing import Dict
 
 import joblib
@@ -91,20 +93,28 @@ def _benchmark_mlp_latency(model: FSLDeepMLP, X_scaled: np.ndarray, n_iters: int
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Evaluate Baseline SVM and Deep MLP")
+    parser.add_argument("--split", default="test", choices=["val", "test"], help="Dataset split")
+    parser.add_argument("--weights", type=Path, default=MODELS_DIR / "mlp_model.pt", help="MLP weights path")
+    args = parser.parse_args()
+
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     data = np.load(DATA_DIR / "fsl_landmarks.npz")
-    X_test, y_test = data["X_test"], data["y_test"]
+    X_eval = data["X_val"] if args.split == "val" else data["X_test"]
+    y_eval = data["y_val"] if args.split == "val" else data["y_test"]
 
-    results: Dict[str, Dict] = {"test_samples": int(len(y_test))}
+    results: Dict[str, Dict] = {"split": args.split, "test_samples": int(len(y_eval))}
 
     # 1. Baseline SVM
-    svm_pipe = joblib.load(MODELS_DIR / "svm_baseline.joblib")
-    svm_pred = svm_pipe.predict(X_test)
-    svm_metrics = _compute_metrics(y_test, svm_pred)
-    svm_metrics["cpu_latency_ms"] = round(_benchmark_svm_latency(svm_pipe, X_test), 3)
+    svm_path = MODELS_DIR / "svm_baseline.joblib"
+    svm_pipe = joblib.load(svm_path)
+    svm_pred = svm_pipe.predict(X_eval)
+    svm_metrics = _compute_metrics(y_eval, svm_pred)
+    svm_metrics["cpu_latency_ms"] = round(_benchmark_svm_latency(svm_pipe, X_eval), 3)
+    svm_metrics["model_size_kb"] = round(svm_path.stat().st_size / 1024.0, 1)
     results["svm_baseline"] = svm_metrics
     _save_confusion_matrix(
-        y_test,
+        y_eval,
         svm_pred,
         f"Baseline RBF-SVM Confusion Matrix (Acc={svm_metrics['accuracy']*100:.2f}%)",
         REPORTS_DIR / "confusion_matrix_svm.png",
@@ -112,7 +122,7 @@ def main() -> None:
 
     # 2. Deep MLP
     mlp_scaler = joblib.load(MODELS_DIR / "mlp_scaler.joblib")
-    ckpt = torch.load(MODELS_DIR / "mlp_model.pt", map_location="cpu", weights_only=True)
+    ckpt = torch.load(args.weights, map_location="cpu", weights_only=True)
     mlp_model = FSLDeepMLP(
         input_dim=ckpt["input_dim"],
         hidden_dims=tuple(ckpt["hidden_dims"]),
@@ -122,18 +132,19 @@ def main() -> None:
     mlp_model.load_state_dict(ckpt["model_state_dict"])
     mlp_model.eval()
 
-    X_test_scaled = mlp_scaler.transform(X_test).astype(np.float32)
+    X_eval_scaled = mlp_scaler.transform(X_eval).astype(np.float32)
     with torch.no_grad():
-        logits = mlp_model(torch.from_numpy(X_test_scaled))
+        logits = mlp_model(torch.from_numpy(X_eval_scaled))
         mlp_probs = torch.softmax(logits, dim=1).numpy()
         mlp_pred = mlp_probs.argmax(axis=1)
 
-    mlp_metrics = _compute_metrics(y_test, mlp_pred)
-    mlp_metrics["cpu_latency_ms"] = round(_benchmark_mlp_latency(mlp_model, X_test_scaled), 3)
+    mlp_metrics = _compute_metrics(y_eval, mlp_pred)
+    mlp_metrics["cpu_latency_ms"] = round(_benchmark_mlp_latency(mlp_model, X_eval_scaled), 3)
+    mlp_metrics["model_size_kb"] = round(args.weights.stat().st_size / 1024.0, 1)
     results["deep_mlp"] = mlp_metrics
     results["machine"] = f"{platform.system()} ({platform.processor() or platform.machine()})"
     _save_confusion_matrix(
-        y_test,
+        y_eval,
         mlp_pred,
         f"Deep MLP Confusion Matrix (Acc={mlp_metrics['accuracy']*100:.2f}%)",
         REPORTS_DIR / "confusion_matrix_mlp.png",
@@ -141,14 +152,14 @@ def main() -> None:
 
     # Save detailed test-set misclassifications for error analysis
     errors = []
-    for idx in range(len(y_test)):
-        if mlp_pred[idx] != y_test[idx]:
+    for idx in range(len(y_eval)):
+        if mlp_pred[idx] != y_eval[idx]:
             errors.append({
                 "test_index": int(idx),
-                "true_label": CLASSES[int(y_test[idx])],
+                "true_label": CLASSES[int(y_eval[idx])],
                 "pred_label": CLASSES[int(mlp_pred[idx])],
                 "pred_confidence": round(float(mlp_probs[idx, mlp_pred[idx]]), 4),
-                "true_confidence": round(float(mlp_probs[idx, y_test[idx]]), 4),
+                "true_confidence": round(float(mlp_probs[idx, y_eval[idx]]), 4),
             })
     (REPORTS_DIR / "test_errors_mlp.json").write_text(json.dumps(errors, indent=2), encoding="utf-8")
 
@@ -156,16 +167,16 @@ def main() -> None:
         json.dumps(results, indent=2), encoding="utf-8"
     )
 
-    print(f"\n=== Test Set Evaluation Summary ({results['machine']}) ===")
+    print(f"\n=== {args.split.upper()} Set Evaluation Summary ({results['machine']}) ===")
     for name in ("svm_baseline", "deep_mlp"):
         m = results[name]
         print(
             f"{name:14s} | Acc={m['accuracy']:.4f} | Macro F1={m['macro_f1']:.4f} "
             f"| Prec={m['macro_precision']:.4f} | Rec={m['macro_recall']:.4f} "
-            f"| Latency={m['cpu_latency_ms']:.3f} ms"
+            f"| Latency={m['cpu_latency_ms']:.3f} ms | Size={m['model_size_kb']:.1f} KB"
         )
-    print(f"\nDeep MLP Per-Class Classification Report (Test Set, n={len(y_test)}):")
-    print(classification_report(y_test, mlp_pred, target_names=CLASSES, digits=3, zero_division=0))
+    print(f"\nDeep MLP Per-Class Classification Report ({args.split.upper()}, n={len(y_eval)}):")
+    print(classification_report(y_eval, mlp_pred, target_names=CLASSES, digits=3, zero_division=0))
 
 
 if __name__ == "__main__":
