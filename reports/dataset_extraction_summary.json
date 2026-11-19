@@ -1,0 +1,142 @@
+{
+  "total_images": 11700,
+  "total_detected": 11683,
+  "detection_rate": 0.9985,
+  "splits": {
+    "train": 8178,
+    "val": 1752,
+    "test": 1753
+  },
+  "per_class": {
+    "A": {
+      "total": 450,
+      "detected": 446,
+      "failed": 4
+    },
+    "B": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "C": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "D": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "E": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "F": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "G": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "H": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "I": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "J": {
+      "total": 450,
+      "detected": 449,
+      "failed": 1
+    },
+    "K": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "L": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "M": {
+      "total": 450,
+      "detected": 449,
+      "failed": 1
+    },
+    "N": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "O": {
+      "total": 450,
+      "detected": 448,
+      "failed": 2
+    },
+    "P": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "Q": {
+      "total": 450,
+      "detected": 448,
+      "failed": 2
+    },
+    "R": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "S": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "T": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "U": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "V": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "W": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "X": {
+      "total": 450,
+      "detected": 447,
+      "failed": 3
+    },
+    "Y": {
+      "total": 450,
+      "detected": 450,
+      "failed": 0
+    },
+    "Z": {
+      "total": 450,
+      "detected": 446,
+      "failed": 4
+    }
+  }
+}

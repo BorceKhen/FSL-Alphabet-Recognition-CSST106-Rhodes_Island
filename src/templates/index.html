@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Filipino Sign Language Recognition System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">FSL</div>
+      <div>
+        <h1>Filipino Sign Language Recognition System</h1>
+        <p class="subtitle">Computer Vision-Based Alphabet Recognition &amp; Text-Based Communication</p>
+      </div>
+    </div>
+
+    <div class="topbar-controls">
+      <label class="control-group">
+        <span>Classifier</span>
+        <select id="modelSelect">
+          <option value="Deep MLP">Deep MLP (Main)</option>
+          {% if has_svm %}
+          <option value="Baseline SVM">Baseline RBF-SVM</option>
+          {% endif %}
+        </select>
+      </label>
+
+      <label class="control-group">
+        <span>Camera</span>
+        <select id="cameraSelect">
+          <option value="">Default Webcam</option>
+        </select>
+      </label>
+
+      <div class="switch-group">
+        <label class="switch-label" title="Contrast Limited Adaptive Histogram Equalization for low-light environments">
+          <input type="checkbox" id="claheToggle" class="switch-input" />
+          <span class="switch-pill"></span>
+          <span>CLAHE Lighting</span>
+        </label>
+
+        <label class="switch-label" title="Automatically insert a space after 2.0 seconds without a hand">
+          <input type="checkbox" id="autoSpaceToggle" class="switch-input" />
+          <span class="switch-pill"></span>
+          <span>Auto-Space (2s)</span>
+        </label>
+
+        <label class="switch-label" title="Show or hide the 21-keypoint MediaPipe hand skeleton overlay">
+          <input type="checkbox" id="skeletonToggle" class="switch-input" checked />
+          <span class="switch-pill"></span>
+          <span>Skeleton</span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Left Column: Live Video Acquisition -->
+    <section class="card camera-card">
+      <div class="card-header-row">
+        <span class="section-label">LIVE VIDEO ACQUISITION</span>
+        <span id="statusBanner" class="status-pill status-idle">Camera Offline</span>
+      </div>
+
+      <div class="camera-stage">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="overlay" width="640" height="480"></canvas>
+
+        <!-- Corner Framing Guide for Optimal Hand Zone -->
+        <div class="framing-guide" aria-hidden="true">
+          <span class="corner tl"></span>
+          <span class="corner tr"></span>
+          <span class="corner bl"></span>
+          <span class="corner br"></span>
+        </div>
+
+        <!-- Radial Dwell-Time Progress Ring (Top-Left) -->
+        <div class="dwell-ring-hud" id="dwellRingHud" aria-hidden="true">
+          <svg viewBox="0 0 56 56" class="dwell-ring-svg">
+            <circle class="dwell-ring-bg" cx="28" cy="28" r="22"></circle>
+            <circle id="dwellRingProgress" class="dwell-ring-fg" cx="28" cy="28" r="22"></circle>
+          </svg>
+        </div>
+
+        <!-- Read-Only Telemetry HUD (Bottom-Right) -->
+        <div class="video-telemetry-hud">
+          <span id="latencyHud">Latency: -- ms</span>
+          <span class="hud-sep">•</span>
+          <span id="fpsHud">FPS: --</span>
+        </div>
+
+        <div class="camera-placeholder" id="cameraPlaceholder">
+          <p>Select a camera and click <strong>Start Camera</strong> to begin recognition.</p>
+        </div>
+      </div>
+
+      <div class="camera-footer">
+        <button id="toggleCamBtn" class="btn btn-primary">Start Camera</button>
+        <label class="switch-label">
+          <input type="checkbox" id="mirrorToggle" class="switch-input" checked />
+          <span class="switch-pill"></span>
+          <span>Mirror Preview</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Right Column: Detection & Transcription -->
+    <section class="card recognition-card">
+      <div class="prediction-header">
+        <div id="detectedBox" class="detected-box">
+          <span class="section-label">DETECTED SIGN</span>
+          <div id="detectedLetter" class="detected-letter">-</div>
+        </div>
+
+        <div class="top3-box">
+          <span class="section-label">TOP-3 CLASS PROBABILITIES (τ = {{ confidence_threshold }}%)</span>
+          <div id="top3List" class="top3-list">
+            <div class="top3-row is-leader">
+              <span class="top3-char">-</span>
+              <div class="bar-track threshold-track"><span class="threshold-line" style="left: {{ confidence_threshold }}%"></span><div class="bar-fill" style="width: 0%"></div></div>
+              <span class="top3-pct">0%</span>
+            </div>
+            <div class="top3-row">
+              <span class="top3-char">-</span>
+              <div class="bar-track threshold-track"><span class="threshold-line" style="left: {{ confidence_threshold }}%"></span><div class="bar-fill" style="width: 0%"></div></div>
+              <span class="top3-pct">0%</span>
+            </div>
+            <div class="top3-row">
+              <span class="top3-char">-</span>
+              <div class="bar-track threshold-track"><span class="threshold-line" style="left: {{ confidence_threshold }}%"></span><div class="bar-fill" style="width: 0%"></div></div>
+              <span class="top3-pct">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="transcription-section">
+        <div class="dwell-header">
+          <span class="section-label">TEXT TRANSCRIPTION OUTPUT</span>
+          <span class="shortcut-hint">Shortcuts: Space • Backspace • Esc (Clear)</span>
+        </div>
+        <div id="textBufferDisplay" class="text-buffer-display" aria-live="polite">
+          <span id="textBufferPlaceholder" class="text-placeholder">Hold a steady FSL sign for 1.0 second to transcribe...</span>
+          <span id="textBufferContent"></span><span class="blinking-cursor" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="buffer-actions">
+        <button class="btn btn-slate" data-action="space">
+          <span>Space</span><kbd class="keycap">Space</kbd>
+        </button>
+        <button class="btn btn-slate" data-action="backspace">
+          <span>Backspace</span><kbd class="keycap">⌫</kbd>
+        </button>
+        <button class="btn btn-ghost-danger" data-action="clear">Clear</button>
+        <button id="copyBtn" class="btn btn-slate">Copy</button>
+        <button id="speakBtn" class="btn btn-primary">Speak</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Panel: FSL Alphabet Reference Grid (A–Z) -->
+  <section class="card cheatsheet-card">
+    <div class="cheatsheet-header">
+      <div class="cheatsheet-title-row">
+        <span class="section-label">FSL ALPHABET REFERENCE (A–Z)</span>
+        <span class="subtitle">Active classification highlights above {{ confidence_threshold }}% confidence</span>
+      </div>
+      <button id="toggleCheatBtn" class="btn btn-small btn-slate">Hide Reference</button>
+    </div>
+
+    <div id="cheatsheetGrid" class="cheatsheet-grid">
+      {% for letter in classes %}
+      <div class="cheat-tile" data-letter="{{ letter }}">
+        <span class="cheat-badge">{{ letter }}</span>
+        <img src="{{ url_for('api_reference', letter=letter) }}" alt="FSL {{ letter }}" loading="lazy" />
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <script>
+    window.FSL_CONFIG = {
+      handConnections: {{ hand_connections | tojson }},
+      confidenceThreshold: {{ confidence_threshold }}
+    };
+  </script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
