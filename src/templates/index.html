@@ -13,7 +13,7 @@
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
     crossorigin="anonymous"
   />
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=5) }}" />
 </head>
 <body>
   <div class="app-viewport container-fluid">
@@ -30,22 +30,8 @@
             />
           </div>
 
-          <div class="rail-action-slot my-lg-auto pt-lg-3">
-            <button
-              type="button"
-              id="mirrorQuickBtn"
-              class="circle-icon-btn circle-btn-md is-active"
-              title="Mirror Preview (On)"
-              aria-label="Toggle Mirror Preview"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                <circle cx="12" cy="13" r="3" />
-              </svg>
-            </button>
-            <!-- Hidden functional checkbox preserved for app.js -->
-            <input type="checkbox" id="mirrorToggle" class="visually-hidden" checked />
-          </div>
+          <!-- Hidden functional checkbox preserved for app.js -->
+          <input type="checkbox" id="mirrorToggle" class="visually-hidden" checked />
         </aside>
 
         <main class="workspace-container">
@@ -107,19 +93,18 @@
 
                 <!-- Bottom-Center Floating Circular Controls -->
                 <div class="stage-bottom-controls">
-                  <!-- Voice / Speak Quick Trigger -->
+                  <!-- Mirror View Toggle -->
                   <button
                     type="button"
-                    id="stageVoiceBtn"
-                    class="circle-icon-btn circle-btn-lg"
-                    title="Speak Transcribed Text"
-                    aria-label="Speak Transcribed Text"
+                    id="stageMirrorBtn"
+                    class="circle-icon-btn circle-btn-lg is-active"
+                    title="Mirror View (On)"
+                    aria-label="Toggle Mirror View"
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
-                      <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
-                      <line x1="12" y1="18" x2="12" y2="21" />
-                      <ellipse cx="12" cy="21" rx="4" ry="1.2" />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2.5 2.5" />
+                      <polygon points="9 7 3.5 12 9 17 9 7" />
+                      <polygon points="15 7 20.5 12 15 17 15 7" />
                     </svg>
                   </button>
 
@@ -131,20 +116,6 @@
                     title="Start Camera"
                     aria-label="Start Camera"
                   >Start Camera</button>
-
-                  <!-- Upload Image (#imageUploadInput preserved for app.js) -->
-                  <label
-                    class="circle-icon-btn circle-btn-lg upload-circle-btn mb-0"
-                    title="Upload Image for Recognition"
-                    aria-label="Upload Image"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    <input type="file" id="imageUploadInput" accept="image/*" hidden />
-                  </label>
                 </div>
               </div>
             </section>
@@ -197,10 +168,7 @@
                     <span class="panel-card-title">Text Transcription Output</span>
                   </div>
                   <div class="transcription-box-wrap position-relative flex-grow-1 d-flex flex-column">
-                    <div id="textBufferDisplay" class="text-buffer-display flex-grow-1" aria-live="polite">
-                      <span id="textBufferPlaceholder" class="text-placeholder">Hold a steady FSL sign for 1.0s...</span>
-                      <span id="textBufferContent"></span><span class="blinking-cursor" aria-hidden="true"></span>
-                    </div>
+                    <div id="textBufferDisplay" class="text-buffer-display flex-grow-1" aria-live="polite"><div id="textBufferPlaceholder" class="text-placeholder">Hold a steady FSL sign for 1.0s...</div><span id="textBufferContent"></span><span class="blinking-cursor" aria-hidden="true"></span></div>
 
                     <!-- Circular Black Speak Button inside bottom-right of transcription card -->
                     <button
@@ -356,23 +324,21 @@
         });
       }
 
-      // 2. Sync Left-Rail Camera Button with #mirrorToggle
-      const mirrorQuickBtn = document.getElementById("mirrorQuickBtn");
+      // 2. Sync Stage Mirror Button with #mirrorToggle
+      const stageMirrorBtn = document.getElementById("stageMirrorBtn");
       const mirrorToggle = document.getElementById("mirrorToggle");
-      if (mirrorQuickBtn && mirrorToggle) {
-        mirrorQuickBtn.addEventListener("click", () => {
+      if (stageMirrorBtn && mirrorToggle) {
+        const syncMirrorButton = () => {
+          const isMirrored = mirrorToggle.checked;
+          stageMirrorBtn.classList.toggle("is-active", isMirrored);
+          stageMirrorBtn.title = isMirrored ? "Mirror View (On)" : "Mirror View (Off)";
+        };
+        syncMirrorButton();
+        stageMirrorBtn.addEventListener("click", () => {
           mirrorToggle.checked = !mirrorToggle.checked;
-          mirrorQuickBtn.classList.toggle("is-active", mirrorToggle.checked);
-          mirrorQuickBtn.title = mirrorToggle.checked ? "Mirror Preview (On)" : "Mirror Preview (Off)";
+          syncMirrorButton();
           mirrorToggle.dispatchEvent(new Event("change", { bubbles: true }));
         });
-      }
-
-      // 3. Stage Voice Button delegates directly to #speakBtn
-      const stageVoiceBtn = document.getElementById("stageVoiceBtn");
-      const speakBtn = document.getElementById("speakBtn");
-      if (stageVoiceBtn && speakBtn) {
-        stageVoiceBtn.addEventListener("click", () => speakBtn.click());
       }
 
       // 4. Observe #toggleCamBtn text updates from app.js to toggle active recording ring
@@ -397,6 +363,6 @@
     });
   </script>
 
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js', v=5) }}"></script>
 </body>
 </html>

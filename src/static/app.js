@@ -292,7 +292,8 @@
     else startCamera();
   });
 
-  imageUploadInput.addEventListener("change", (e) => {
+  if (imageUploadInput) {
+    imageUploadInput.addEventListener("change", (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     if (running) stopCamera();
@@ -361,9 +362,10 @@
       fpsHud.textContent = "Mode: Image";
       URL.revokeObjectURL(img.src);
     };
-    img.src = URL.createObjectURL(file);
-    imageUploadInput.value = "";
-  });
+      img.src = URL.createObjectURL(file);
+      imageUploadInput.value = "";
+    });
+  }
 
   cameraSelect.addEventListener("change", () => {
     if (running) {
