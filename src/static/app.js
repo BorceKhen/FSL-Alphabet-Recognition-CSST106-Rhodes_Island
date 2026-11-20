@@ -40,6 +40,7 @@
   const refModalCounter = document.getElementById("refModalCounter");
   const refPrevBtn = document.getElementById("refPrevBtn");
   const refNextBtn = document.getElementById("refNextBtn");
+  const refSampleThumbs = Array.from(document.querySelectorAll(".ref-sample-thumb"));
   const cheatTiles = Array.from(document.querySelectorAll(".cheat-tile"));
   let currentRefIdx = 0;
 
@@ -406,18 +407,34 @@
     toggleCheatBtn.textContent = hidden ? "Show Reference" : "Hide Reference";
   });
 
+  function selectRefSample(letter, sampleIdx) {
+    refModalImg.src = `/api/reference/${letter}?idx=${sampleIdx}`;
+    refModalImg.alt = `FSL Sign ${letter} (Sample ${sampleIdx + 1})`;
+    refSampleThumbs.forEach((btn, i) => btn.classList.toggle("active", i === sampleIdx));
+  }
+
   function openRefModal(index) {
     currentRefIdx = (index + cheatTiles.length) % cheatTiles.length;
     const tile = cheatTiles[currentRefIdx];
     const letter = tile.dataset.letter;
-    const imgEl = tile.querySelector("img");
     refModalBadge.textContent = letter;
     refModalTitle.textContent = `FSL Sign Reference — "${letter}"`;
-    refModalImg.src = imgEl.src;
-    refModalImg.alt = `FSL Sign ${letter}`;
+    refSampleThumbs.forEach((btn, i) => {
+      const thumbImg = btn.querySelector("img");
+      thumbImg.src = `/api/reference/${letter}?idx=${i}`;
+      thumbImg.alt = `FSL ${letter} sample ${i + 1}`;
+    });
+    selectRefSample(letter, 0);
     refModalCounter.textContent = `${currentRefIdx + 1} / ${cheatTiles.length}`;
     refModal.classList.remove("hidden");
   }
+
+  refSampleThumbs.forEach((btn, i) => {
+    btn.addEventListener("click", () => {
+      const letter = cheatTiles[currentRefIdx].dataset.letter;
+      selectRefSample(letter, i);
+    });
+  });
 
   function closeRefModal() {
     refModal.classList.add("hidden");

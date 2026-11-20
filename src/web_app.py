@@ -133,13 +133,18 @@ def api_reference(letter: str):
     if letter not in CLASSES:
         return jsonify({"error": "Invalid letter"}), 404
     class_dir = DATASET_DIR / letter
-    sample = next(
-        (p for p in sorted(class_dir.iterdir()) if p.suffix.lower() in {".jpg", ".jpeg", ".png"}),
-        None,
-    )
-    if sample is None:
+    samples = [
+        p for p in sorted(class_dir.iterdir()) if p.suffix.lower() in {".jpg", ".jpeg", ".png"}
+    ]
+    if not samples:
         return jsonify({"error": "Sample not found"}), 404
-    return send_file(sample, mimetype="image/jpeg")
+
+    idx = request.args.get("idx", default=0, type=int)
+    idx = max(0, idx)
+    # Pick evenly spaced samples across the 450 images for diverse angles/lighting
+    step = max(1, len(samples) // 4)
+    chosen = samples[(idx * step) % len(samples)]
+    return send_file(chosen, mimetype="image/jpeg")
 
 
 def main() -> None:
