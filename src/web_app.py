@@ -12,7 +12,7 @@ import numpy as np
 from flask import Flask, jsonify, render_template, request, send_file
 
 from src.app import ModelPredictor
-from src.config import CLASSES, CONFIDENCE_THRESHOLD, DATASET_DIR, SPACE_PAUSE_SECONDS
+from src.config import CLASSES, CONFIDENCE_THRESHOLD, DATA_DIR, SPACE_PAUSE_SECONDS
 from src.features import HAND_CONNECTIONS, HandLandmarkExtractor
 from src.postprocess import WordFormationProcessor
 
@@ -133,34 +133,11 @@ def api_reference(letter: str):
     if letter not in CLASSES:
         return jsonify({"error": "Invalid letter"}), 404
 
-    class_dir = DATASET_DIR / letter
-    if class_dir.is_dir():
-        samples = [
-            p for p in sorted(class_dir.iterdir())
-            if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png"}
-        ]
-    else:
-        samples = []
-
-    if not samples:
-        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
-          <rect width="300" height="300" fill="#f2d45c"/>
-          <circle cx="150" cy="150" r="105" fill="#fff" stroke="#111" stroke-width="8"/>
-          <text x="150" y="205" text-anchor="middle" font-family="Arial,sans-serif" font-size="150" font-weight="700" fill="#111">{letter}</text>
-        </svg>'''
-        return app.response_class(svg, mimetype="image/svg+xml")
-
-    idx = request.args.get("idx", default=0, type=int)
-    idx = max(0, idx)
-    step = max(1, len(samples) // 4)
-    chosen = samples[(idx * step) % len(samples)]
-
-    mime_types = {
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".png": "image/png",
-    }
-    return send_file(chosen, mimetype=mime_types[chosen.suffix.lower()])
+    idx = max(0, request.args.get("idx", default=0, type=int)) % 4
+    ref_img = DATA_DIR / "reference" / letter / f"{idx}.jpg"
+    if not ref_img.exists():
+        return jsonify({"error": "Reference image not found"}), 404
+    return send_file(ref_img, mimetype="image/jpeg")
 
 
 def main() -> None:
