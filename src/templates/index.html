@@ -179,13 +179,35 @@
 
     <div id="cheatsheetGrid" class="cheatsheet-grid">
       {% for letter in classes %}
-      <div class="cheat-tile" data-letter="{{ letter }}">
+      <div class="cheat-tile" data-letter="{{ letter }}" title="Click to preview FSL '{{ letter }}'">
         <span class="cheat-badge">{{ letter }}</span>
         <img src="{{ url_for('api_reference', letter=letter) }}" alt="FSL {{ letter }}" loading="lazy" />
       </div>
       {% endfor %}
     </div>
   </section>
+
+  <!-- Reference Preview Modal -->
+  <div id="refModal" class="ref-modal hidden" role="dialog" aria-modal="true" aria-labelledby="refModalTitle">
+    <div class="ref-modal-backdrop" id="refModalBackdrop"></div>
+    <div class="ref-modal-card">
+      <div class="ref-modal-header">
+        <div class="ref-modal-title-wrap">
+          <span id="refModalBadge" class="ref-modal-badge">A</span>
+          <h2 id="refModalTitle">FSL Alphabet Reference</h2>
+        </div>
+        <button id="refModalClose" class="btn btn-small btn-slate" aria-label="Close preview">&times;</button>
+      </div>
+      <div class="ref-modal-body">
+        <img id="refModalImg" src="" alt="FSL reference preview" />
+      </div>
+      <div class="ref-modal-footer">
+        <button id="refPrevBtn" class="btn btn-small btn-slate">&larr; Prev</button>
+        <span id="refModalCounter" class="subtitle">1 / 26</span>
+        <button id="refNextBtn" class="btn btn-small btn-slate">Next &rarr;</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     window.FSL_CONFIG = {

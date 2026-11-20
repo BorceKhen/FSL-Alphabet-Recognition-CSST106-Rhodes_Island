@@ -31,6 +31,18 @@
   const toggleCheatBtn = document.getElementById("toggleCheatBtn");
   const cheatsheetGrid = document.getElementById("cheatsheetGrid");
 
+  const refModal = document.getElementById("refModal");
+  const refModalBackdrop = document.getElementById("refModalBackdrop");
+  const refModalClose = document.getElementById("refModalClose");
+  const refModalBadge = document.getElementById("refModalBadge");
+  const refModalTitle = document.getElementById("refModalTitle");
+  const refModalImg = document.getElementById("refModalImg");
+  const refModalCounter = document.getElementById("refModalCounter");
+  const refPrevBtn = document.getElementById("refPrevBtn");
+  const refNextBtn = document.getElementById("refNextBtn");
+  const cheatTiles = Array.from(document.querySelectorAll(".cheat-tile"));
+  let currentRefIdx = 0;
+
   const captureCanvas = document.createElement("canvas");
   captureCanvas.width = 640;
   captureCanvas.height = 480;
@@ -394,7 +406,38 @@
     toggleCheatBtn.textContent = hidden ? "Show Reference" : "Hide Reference";
   });
 
+  function openRefModal(index) {
+    currentRefIdx = (index + cheatTiles.length) % cheatTiles.length;
+    const tile = cheatTiles[currentRefIdx];
+    const letter = tile.dataset.letter;
+    const imgEl = tile.querySelector("img");
+    refModalBadge.textContent = letter;
+    refModalTitle.textContent = `FSL Sign Reference — "${letter}"`;
+    refModalImg.src = imgEl.src;
+    refModalImg.alt = `FSL Sign ${letter}`;
+    refModalCounter.textContent = `${currentRefIdx + 1} / ${cheatTiles.length}`;
+    refModal.classList.remove("hidden");
+  }
+
+  function closeRefModal() {
+    refModal.classList.add("hidden");
+  }
+
+  cheatTiles.forEach((tile, idx) => {
+    tile.addEventListener("click", () => openRefModal(idx));
+  });
+  refModalClose.addEventListener("click", closeRefModal);
+  refModalBackdrop.addEventListener("click", closeRefModal);
+  refPrevBtn.addEventListener("click", () => openRefModal(currentRefIdx - 1));
+  refNextBtn.addEventListener("click", () => openRefModal(currentRefIdx + 1));
+
   window.addEventListener("keydown", (e) => {
+    if (!refModal.classList.contains("hidden")) {
+      if (e.code === "Escape") closeRefModal();
+      else if (e.code === "ArrowLeft") openRefModal(currentRefIdx - 1);
+      else if (e.code === "ArrowRight") openRefModal(currentRefIdx + 1);
+      return;
+    }
     if (e.code === "Space") {
       e.preventDefault();
       bufferAction("space");
