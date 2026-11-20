@@ -60,6 +60,9 @@ body {
 .left-rail {
   width: 108px;
   flex: 0 0 108px;
+  height: 100%;
+  min-height: 590px;
+  padding: 2px 0;
 }
 
 .brand-logo-box {
@@ -173,12 +176,13 @@ body {
    ========================================================= */
 .video-column {
   min-width: 0;
+  height: 490px;
 }
 
 .camera-stage {
   position: relative;
   width: 100%;
-  height: 490px;
+  height: 100%;
   background-color: #F4F5F7;
   /* Signature Figma Asymmetric Sweeping Top-Left Curve */
   border-radius: 120px 16px 16px 16px;
@@ -361,6 +365,7 @@ body {
 .right-panel-col {
   width: 318px;
   flex: 0 0 318px;
+  height: 490px;
 }
 
 .yellow-panel {
@@ -503,6 +508,23 @@ body {
   box-shadow: 0 2px 8px rgba(11, 11, 11, 0.05);
 }
 
+.text-buffer-display {
+  display: flex;
+  align-items: flex-start;
+}
+
+.text-placeholder {
+  display: block;
+  width: 100%;
+  min-height: 112px;
+  padding: 36px 12px;
+  border: 1px dashed rgba(82, 82, 91, 0.22);
+  border-radius: 9px;
+  background: rgba(241, 244, 249, 0.55);
+  text-align: center;
+  line-height: 1.5;
+}
+
 .text-placeholder {
   color: #9CA3AF;
   font-size: 13.5px;
@@ -536,7 +558,7 @@ body {
   color: var(--white2);
   border: none;
   border-radius: 10px;
-  height: 40px;
+  height: 30px;
   padding: 4px 6px;
   font-size: 10.5px;
   font-weight: 700;
@@ -660,20 +682,21 @@ body {
    ========================================================= */
 .settings-popover {
   position: absolute;
-  top: 52px;
-  right: 78px;
+  top: 14px;
+  right: 14px;
   z-index: 30;
-  width: 286px;
+  width: 320px;
+  max-width: calc(100% - 28px);
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
   border: 1.5px solid rgba(255, 255, 255, 0.95);
   border-radius: 18px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   box-shadow: 0 18px 40px rgba(11, 11, 11, 0.16);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .settings-popover.hidden {
@@ -681,11 +704,12 @@ body {
 }
 
 .settings-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(118px, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin: 0;
+  min-height: 36px;
 }
 
 .settings-switch-row {
@@ -697,12 +721,15 @@ body {
   font-size: 13px;
   font-weight: 600;
   color: var(--black);
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .settings-select-wrap {
   position: relative;
   display: inline-flex;
   align-items: center;
+  max-width: 150px;
 }
 
 .settings-select {
@@ -717,6 +744,9 @@ body {
   text-align: right;
   cursor: pointer;
   outline: none;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .select-chevron {
@@ -803,6 +833,28 @@ body {
   border-radius: 20px;
   padding: 16px;
   box-shadow: 0 24px 60px rgba(11, 11, 11, 0.25);
+}
+
+.ref-modal-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--black);
+  color: var(--white2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.ref-modal-close:hover {
+  background: #262626;
+  transform: scale(1.05);
 }
 
 .ref-modal-header {
@@ -894,40 +946,25 @@ body {
    RESPONSIVE BREAKPOINTS (Bootstrap Flexible Support)
    ========================================================= */
 @media (max-width: 991.98px) {
+  .main-layout-row {
+    flex-wrap: wrap;
+  }
+
   .left-rail {
     width: 100%;
-    flex: 0 0 100%;
+    min-height: 0;
+    height: auto;
+    padding: 0;
   }
 
+  .video-column,
   .right-panel-col {
-    width: 100%;
-    flex: 0 0 100%;
-  }
-
-  .camera-stage {
     height: 400px;
-    border-radius: 48px 16px 16px 16px;
   }
 
-  .stage-top-hud {
-    left: 20px;
-  }
-
-  .settings-popover {
-    right: 24px;
-    top: 84px;
-  }
-
-  .cheatsheet-grid {
-    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
-  }
-
-  .workspace-container {
-    width: 100%;
-  }
-
-  .ref-modal {
-    inset: 4px;
+  .camera-stage,
+  .yellow-panel {
+    height: 100%;
   }
 }
 
@@ -941,8 +978,17 @@ body {
     border-radius: 24px;
   }
 
-  .camera-stage {
+  .video-column,
+  .right-panel-col {
     height: 330px;
+  }
+
+  .camera-stage,
+  .yellow-panel {
+    height: 100%;
+  }
+
+  .camera-stage {
     border-radius: 28px 14px 14px 14px;
   }
 
@@ -956,9 +1002,23 @@ body {
   }
 }
 
-.main-layout-row,
+.main-layout-row {
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
 .workspace-upper-row {
   align-items: stretch;
+}
+
+.video-column,
+.right-panel-col {
+  height: 490px;
+}
+
+.camera-stage,
+.yellow-panel {
+  height: 100%;
 }
 
 .workspace-container {
@@ -968,6 +1028,6 @@ body {
   padding: 6px;
   background: rgba(255, 255, 255, 0.58);
   border: 1px solid rgba(255, 255, 255, 0.92);
-  border-radius: 22px;
+  border-radius: 120px 22px 22px 22px;
   overflow: hidden;
 }

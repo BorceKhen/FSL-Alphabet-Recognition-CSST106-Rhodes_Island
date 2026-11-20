@@ -88,7 +88,7 @@
   function setBufferText(text) {
     currentBufferText = text || "";
     textBufferContent.textContent = currentBufferText;
-    textBufferPlaceholder.style.display = currentBufferText.length > 0 ? "none" : "inline";
+    textBufferPlaceholder.style.display = currentBufferText.length > 0 ? "none" : "flex";
   }
 
   function drawSkeleton(landmarks) {
