@@ -1,15 +1,30 @@
 """Central configuration for the FSL Alphabet Recognition System."""
 
+from __future__ import annotations
+
+import os
+
 from pathlib import Path
 
 # Base paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATASET_DIR = Path(
-    r"C:\Users\kentr\OneDrive\Desktop\CS Stuff\BS ComSci (4th Year)\Computer Vision\FSL Dataset\Collated"
-)
 DATA_DIR = PROJECT_ROOT / "data"
 MODELS_DIR = PROJECT_ROOT / "models"
 REPORTS_DIR = PROJECT_ROOT / "reports"
+
+# Raw FSL dataset used for the alphabet reference pictures.
+# Set FSL_DATASET_DIR to the folder that contains A/, B/, ... Z/.
+_env_dataset_dir = os.environ.get("FSL_DATASET_DIR")
+_dataset_candidates = (
+    Path(_env_dataset_dir).expanduser() if _env_dataset_dir else None,
+    PROJECT_ROOT / "data" / "FSL Dataset" / "Collated",
+    PROJECT_ROOT / "data" / "FSL_Dataset" / "Collated",
+    PROJECT_ROOT / "FSL Dataset" / "Collated",
+)
+DATASET_DIR = next(
+    (path for path in _dataset_candidates if path is not None and path.is_dir()),
+    PROJECT_ROOT / "data" / "FSL Dataset" / "Collated",
+)
 
 # Classes A-Z
 CLASSES = [chr(ord("A") + i) for i in range(26)]

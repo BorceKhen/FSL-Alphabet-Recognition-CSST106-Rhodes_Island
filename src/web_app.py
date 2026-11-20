@@ -132,19 +132,35 @@ def api_reference(letter: str):
     letter = letter.upper()
     if letter not in CLASSES:
         return jsonify({"error": "Invalid letter"}), 404
+
     class_dir = DATASET_DIR / letter
-    samples = [
-        p for p in sorted(class_dir.iterdir()) if p.suffix.lower() in {".jpg", ".jpeg", ".png"}
-    ]
+    if class_dir.is_dir():
+        samples = [
+            p for p in sorted(class_dir.iterdir())
+            if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png"}
+        ]
+    else:
+        samples = []
+
     if not samples:
-        return jsonify({"error": "Sample not found"}), 404
+        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+          <rect width="300" height="300" fill="#f2d45c"/>
+          <circle cx="150" cy="150" r="105" fill="#fff" stroke="#111" stroke-width="8"/>
+          <text x="150" y="205" text-anchor="middle" font-family="Arial,sans-serif" font-size="150" font-weight="700" fill="#111">{letter}</text>
+        </svg>'''
+        return app.response_class(svg, mimetype="image/svg+xml")
 
     idx = request.args.get("idx", default=0, type=int)
     idx = max(0, idx)
-    # Pick evenly spaced samples across the 450 images for diverse angles/lighting
     step = max(1, len(samples) // 4)
     chosen = samples[(idx * step) % len(samples)]
-    return send_file(chosen, mimetype="image/jpeg")
+
+    mime_types = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+    }
+    return send_file(chosen, mimetype=mime_types[chosen.suffix.lower()])
 
 
 def main() -> None:

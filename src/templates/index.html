@@ -3,224 +3,398 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Filipino Sign Language Recognition System</title>
+  <title>KUMPAS | Filipino Sign Language Recognition System</title>
+  <!-- Bootstrap 5 for flexible responsive layout -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  />
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark" aria-hidden="true">FSL</div>
-      <div>
-        <h1>Filipino Sign Language Recognition System</h1>
-        <p class="subtitle">Computer Vision-Based Alphabet Recognition &amp; Text-Based Communication</p>
-      </div>
-    </div>
+  <div class="app-viewport container-fluid">
+    <!-- Glassmorphic Main Shell -->
+    <div class="glass-shell">
+      <div class="row g-3 main-layout-row">
+        <!-- Left Rail: KUMPAS Logo + Sidebar Camera/Mirror Toggle -->
+        <aside class="col-12 col-lg-auto left-rail d-flex flex-row flex-lg-column align-items-center justify-content-between justify-content-lg-start">
+          <div class="brand-logo-box" title="KUMPAS — Filipino Sign Language Recognition System">
+            <img
+              src="{{ url_for('static', filename='Kumpas_Logo.png') }}"
+              alt="KUMPAS Sign Language Logo"
+              class="brand-logo-img"
+            />
+          </div>
 
-    <div class="topbar-controls">
-      <label class="control-group">
-        <span>Classifier</span>
-        <select id="modelSelect">
-          <option value="Deep MLP">Deep MLP (Main)</option>
-          {% if has_svm %}
-          <option value="Baseline SVM">Baseline RBF-SVM</option>
-          {% endif %}
-        </select>
-      </label>
+          <div class="rail-action-slot my-lg-auto pt-lg-3">
+            <button
+              type="button"
+              id="mirrorQuickBtn"
+              class="circle-icon-btn circle-btn-md is-active"
+              title="Mirror Preview (On)"
+              aria-label="Toggle Mirror Preview"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+            </button>
+            <!-- Hidden functional checkbox preserved for app.js -->
+            <input type="checkbox" id="mirrorToggle" class="visually-hidden" checked />
+          </div>
+        </aside>
 
-      <label class="control-group">
-        <span>Camera</span>
-        <select id="cameraSelect">
-          <option value="">Default Webcam</option>
-        </select>
-      </label>
+        <main class="workspace-container">
+          <div class="row g-3 workspace-upper-row">
+            <!-- Center Column: Live Video Acquisition Stage -->
+            <section class="col-12 col-lg video-column">
+              <div class="camera-stage" id="cameraStage">
+                <video id="webcam" autoplay playsinline muted></video>
+                <canvas id="overlay" width="640" height="480"></canvas>
 
-      <div class="switch-group">
-        <label class="switch-label" title="Contrast Limited Adaptive Histogram Equalization for low-light environments">
-          <input type="checkbox" id="claheToggle" class="switch-input" />
-          <span class="switch-pill"></span>
-          <span>CLAHE Lighting</span>
-        </label>
+                <!-- Idle Checkerboard Placeholder matching Figma -->
+                <div class="camera-placeholder" id="cameraPlaceholder">
+                  <div class="placeholder-hint">
+                    <span>Click the camera button below to start recognition</span>
+                  </div>
+                </div>
 
-        <label class="switch-label" title="Automatically insert a space after 2.0 seconds without a hand">
-          <input type="checkbox" id="autoSpaceToggle" class="switch-input" />
-          <span class="switch-pill"></span>
-          <span>Auto-Space (2s)</span>
-        </label>
+                <!-- Corner Framing Guide -->
+                <div class="framing-guide" aria-hidden="true">
+                  <span class="corner tl"></span>
+                  <span class="corner tr"></span>
+                  <span class="corner bl"></span>
+                  <span class="corner br"></span>
+                </div>
 
-        <label class="switch-label" title="Show or hide the 21-keypoint MediaPipe hand skeleton overlay">
-          <input type="checkbox" id="skeletonToggle" class="switch-input" checked />
-          <span class="switch-pill"></span>
-          <span>Skeleton</span>
-        </label>
-      </div>
-    </div>
-  </header>
+                <!-- Radial Dwell-Time Progress Ring -->
+                <div class="dwell-ring-hud" id="dwellRingHud" aria-hidden="true">
+                  <svg viewBox="0 0 56 56" class="dwell-ring-svg">
+                    <circle class="dwell-ring-bg" cx="28" cy="28" r="22"></circle>
+                    <circle id="dwellRingProgress" class="dwell-ring-fg" cx="28" cy="28" r="22"></circle>
+                  </svg>
+                </div>
 
-  <main class="workspace">
-    <!-- Left Column: Live Video Acquisition -->
-    <section class="card camera-card">
-      <div class="card-header-row">
-        <span class="section-label">LIVE VIDEO ACQUISITION</span>
-        <span id="statusBanner" class="status-pill status-idle">Camera Offline</span>
-      </div>
+                <!-- Subtle Status & Telemetry Pill (Preserves #statusBanner, #latencyHud, #fpsHud) -->
+                <div class="stage-top-hud">
+                  <span id="statusBanner" class="status-pill status-idle">Camera Offline</span>
+                  <div class="video-telemetry-hud">
+                    <span id="latencyHud">Latency: -- ms</span>
+                    <span class="hud-sep">•</span>
+                    <span id="fpsHud">FPS: --</span>
+                  </div>
+                </div>
 
-      <div class="camera-stage">
-        <video id="webcam" autoplay playsinline muted></video>
-        <canvas id="overlay" width="640" height="480"></canvas>
+                <!-- Top-Right Gear Settings Button -->
+                <button
+                  type="button"
+                  id="settingsGearBtn"
+                  class="circle-icon-btn circle-btn-lg stage-gear-btn"
+                  title="Recognition & Camera Settings"
+                  aria-label="Open Settings"
+                  aria-expanded="false"
+                  aria-controls="settingsPopover"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                </button>
 
-        <!-- Corner Framing Guide for Optimal Hand Zone -->
-        <div class="framing-guide" aria-hidden="true">
-          <span class="corner tl"></span>
-          <span class="corner tr"></span>
-          <span class="corner bl"></span>
-          <span class="corner br"></span>
-        </div>
+                <!-- Bottom-Center Floating Circular Controls -->
+                <div class="stage-bottom-controls">
+                  <!-- Voice / Speak Quick Trigger -->
+                  <button
+                    type="button"
+                    id="stageVoiceBtn"
+                    class="circle-icon-btn circle-btn-lg"
+                    title="Speak Transcribed Text"
+                    aria-label="Speak Transcribed Text"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+                      <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+                      <line x1="12" y1="18" x2="12" y2="21" />
+                      <ellipse cx="12" cy="21" rx="4" ry="1.2" />
+                    </svg>
+                  </button>
 
-        <!-- Radial Dwell-Time Progress Ring (Top-Left) -->
-        <div class="dwell-ring-hud" id="dwellRingHud" aria-hidden="true">
-          <svg viewBox="0 0 56 56" class="dwell-ring-svg">
-            <circle class="dwell-ring-bg" cx="28" cy="28" r="22"></circle>
-            <circle id="dwellRingProgress" class="dwell-ring-fg" cx="28" cy="28" r="22"></circle>
-          </svg>
-        </div>
+                  <!-- Start / Stop Camera (#toggleCamBtn preserved for app.js) -->
+                  <button
+                    type="button"
+                    id="toggleCamBtn"
+                    class="circle-icon-btn circle-btn-lg cam-toggle-btn"
+                    title="Start Camera"
+                    aria-label="Start Camera"
+                  >Start Camera</button>
 
-        <!-- Read-Only Telemetry HUD (Bottom-Right) -->
-        <div class="video-telemetry-hud">
-          <span id="latencyHud">Latency: -- ms</span>
-          <span class="hud-sep">•</span>
-          <span id="fpsHud">FPS: --</span>
-        </div>
+                  <!-- Upload Image (#imageUploadInput preserved for app.js) -->
+                  <label
+                    class="circle-icon-btn circle-btn-lg upload-circle-btn mb-0"
+                    title="Upload Image for Recognition"
+                    aria-label="Upload Image"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <input type="file" id="imageUploadInput" accept="image/*" hidden />
+                  </label>
+                </div>
+              </div>
+            </section>
 
-        <div class="camera-placeholder" id="cameraPlaceholder">
-          <p>Select a camera and click <strong>Start Camera</strong> to begin recognition.</p>
-        </div>
-      </div>
+            <!-- Right Column: Golden-Yellow Detection & Transcription Panel -->
+            <section class="col-12 col-lg-auto right-panel-col">
+              <div class="yellow-panel h-100 d-flex flex-column justify-content-between">
+                <!-- Top: Detected Sign -->
+                <div id="detectedBox" class="detected-hero text-center">
+                  <div id="detectedLetter" class="detected-letter">A</div>
+                  <div class="detected-caption">Detected Sign</div>
+                </div>
+                <!-- Middle-Top: TOP 3 Class Probability Card -->
+                <div class="panel-white-card top3-card">
+                  <div class="panel-card-title d-flex align-items-center justify-content-between">
+                    <span>TOP 3 Class Probability</span>
+                    <span class="threshold-tag">&tau; = {{ confidence_threshold }}%</span>
+                  </div>
+                  <div id="top3List" class="top3-list">
+                    <div class="top3-row is-leader">
+                      <span class="top3-char">-</span>
+                      <div class="bar-track threshold-track">
+                        <span class="threshold-line" style="left: 0%"></span>
+                        <div class="bar-fill" style="width: 0%"></div>
+                      </div>
+                      <span class="top3-pct">0%</span>
+                    </div>
+                    <div class="top3-row">
+                      <span class="top3-char">-</span>
+                      <div class="bar-track threshold-track">
+                        <span class="threshold-line" style="left: 0%"></span>
+                        <div class="bar-fill" style="width: 0%"></div>
+                      </div>
+                      <span class="top3-pct">0%</span>
+                    </div>
+                    <div class="top3-row">
+                      <span class="top3-char">-</span>
+                      <div class="bar-track threshold-track">
+                        <span class="threshold-line" style="left: 0%"></span>
+                        <div class="bar-fill" style="width: 0%"></div>
+                      </div>
+                      <span class="top3-pct">0%</span>
+                    </div>
+                  </div>
+                </div>
 
-      <div class="camera-footer">
-        <div class="camera-btn-group">
-          <button id="toggleCamBtn" class="btn btn-primary">Start Camera</button>
-          <label class="btn btn-slate upload-btn">
-            <span>Upload Image</span>
-            <input type="file" id="imageUploadInput" accept="image/*" hidden />
-          </label>
-        </div>
-        <label class="switch-label">
-          <input type="checkbox" id="mirrorToggle" class="switch-input" checked />
-          <span class="switch-pill"></span>
-          <span>Mirror Preview</span>
-        </label>
-      </div>
-    </section>
+                <!-- Middle-Bottom: Text Transcription Output -->
+                <div class="transcription-block d-flex flex-column flex-grow-1">
+                  <div class="transcription-label-row d-flex align-items-center justify-content-between">
+                    <span class="panel-card-title">Text Transcription Output</span>
+                  </div>
+                  <div class="transcription-box-wrap position-relative flex-grow-1 d-flex flex-column">
+                    <div id="textBufferDisplay" class="text-buffer-display flex-grow-1" aria-live="polite">
+                      <span id="textBufferPlaceholder" class="text-placeholder">Hold a steady FSL sign for 1.0s...</span>
+                      <span id="textBufferContent"></span><span class="blinking-cursor" aria-hidden="true"></span>
+                    </div>
 
-    <!-- Right Column: Detection & Transcription -->
-    <section class="card recognition-card">
-      <div class="prediction-header">
-        <div id="detectedBox" class="detected-box">
-          <span class="section-label">DETECTED SIGN</span>
-          <div id="detectedLetter" class="detected-letter">-</div>
-        </div>
+                    <!-- Circular Black Speak Button inside bottom-right of transcription card -->
+                    <button
+                      type="button"
+                      id="speakBtn"
+                      class="circle-icon-btn circle-btn-sm transcription-speak-btn"
+                      title="Speak Output"
+                      aria-label="Speak Output"
+                    >Speak</button>
+                  </div>
+                </div>
 
-        <div class="top3-box">
-          <span class="section-label">TOP-3 CLASS PROBABILITIES (τ = {{ confidence_threshold }}%)</span>
-          <div id="top3List" class="top3-list">
-            <div class="top3-row is-leader">
-              <span class="top3-char">-</span>
-              <div class="bar-track threshold-track"><span class="threshold-line" style="left: {{ confidence_threshold }}%"></span><div class="bar-fill" style="width: 0%"></div></div>
-              <span class="top3-pct">0%</span>
+                <!-- Bottom: 4 Black Action Buttons -->
+                <div class="buffer-actions">
+                  <button type="button" class="action-pill-btn" data-action="space">SPACE</button>
+                  <button type="button" class="action-pill-btn" data-action="backspace">BACK<br />SPACE</button>
+                  <button type="button" id="copyBtn" class="action-pill-btn">COPY</button>
+                  <button type="button" class="action-pill-btn" data-action="clear">CLEAR</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Bottom Full-Width Panel: FSL Alphabet Reference (A–Z) -->
+          <section class="reference-panel mt-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="d-flex align-items-baseline gap-2 flex-wrap">
+                <h2 class="reference-title mb-0">FSL Alphabet Reference (A–Z)</h2>
+                <span class="reference-sub">Highlights above {{ confidence_threshold }}% confidence</span>
+              </div>
+              <button type="button" id="toggleCheatBtn" class="btn-ref-toggle">Hide Reference</button>
             </div>
-            <div class="top3-row">
-              <span class="top3-char">-</span>
-              <div class="bar-track threshold-track"><span class="threshold-line" style="left: {{ confidence_threshold }}%"></span><div class="bar-fill" style="width: 0%"></div></div>
-              <span class="top3-pct">0%</span>
+
+            <div id="cheatsheetGrid" class="cheatsheet-grid">
+              {% for letter in classes %}
+              <div class="cheat-tile" data-letter="{{ letter }}" title="Click to preview FSL '{{ letter }}'">
+                <span class="cheat-badge">{{ letter }}</span>
+                <img src="{{ url_for('api_reference', letter=letter) }}" alt="FSL {{ letter }}" loading="lazy" />
+              </div>
+              {% endfor %}
             </div>
-            <div class="top3-row">
-              <span class="top3-char">-</span>
-              <div class="bar-track threshold-track"><span class="threshold-line" style="left: {{ confidence_threshold }}%"></span><div class="bar-fill" style="width: 0%"></div></div>
-              <span class="top3-pct">0%</span>
+          </section>
+
+          <!-- Floating Glass Settings Popover -->
+          <div id="settingsPopover" class="settings-popover hidden" role="dialog" aria-label="System Settings">
+            <div class="settings-row">
+              <label for="modelSelect" class="settings-row-label">Classifier</label>
+              <div class="settings-select-wrap">
+                <select id="modelSelect" class="settings-select">
+                  <option value="Deep MLP">Deep MLP</option>
+                  {% if has_svm %}<option value="Baseline SVM">Baseline SVM</option>{% endif %}
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <label for="cameraSelect" class="settings-row-label">Camera</label>
+              <div class="settings-select-wrap">
+                <select id="cameraSelect" class="settings-select"><option value="">Default</option></select>
+              </div>
+            </div>
+
+            <label class="settings-row settings-switch-row" title="Automatically insert a space after 2.0 seconds without a hand">
+              <span class="settings-row-label">Auto Space (2s)</span>
+              <input type="checkbox" id="autoSpaceToggle" class="switch-input" />
+              <span class="figma-switch-pill"></span>
+            </label>
+
+            <label class="settings-row settings-switch-row" title="Enhance low-light contrast">
+              <span class="settings-row-label">CLAHE Lighting</span>
+              <input type="checkbox" id="claheToggle" class="switch-input" />
+              <span class="figma-switch-pill"></span>
+            </label>
+
+            <label class="settings-row settings-switch-row" title="Show or hide the hand skeleton">
+              <span class="settings-row-label">Skeleton</span>
+              <input type="checkbox" id="skeletonToggle" class="switch-input" checked />
+              <span class="figma-switch-pill"></span>
+            </label>
+          </div>
+
+          <!-- Reference Preview Modal (constrained to workspace) -->
+          <div id="refModal" class="ref-modal hidden" role="dialog" aria-modal="true" aria-labelledby="refModalTitle">
+            <div class="ref-modal-backdrop" id="refModalBackdrop"></div>
+            <div class="ref-modal-card">
+              <div class="ref-modal-header">
+                <div class="ref-modal-title-wrap">
+                  <span id="refModalBadge" class="ref-modal-badge">A</span>
+                  <h2 id="refModalTitle">FSL Alphabet Reference</h2>
+                </div>
+                <button type="button" id="refModalClose" class="btn-ref-toggle" aria-label="Close preview">&times;</button>
+              </div>
+              <div class="ref-modal-body"><img id="refModalImg" src="" alt="FSL reference preview" /></div>
+              <div class="ref-sample-strip" id="refSampleStrip">
+                <button type="button" class="ref-sample-thumb active" data-sample-idx="0"><img src="" alt="Sample 1" /></button>
+                <button type="button" class="ref-sample-thumb" data-sample-idx="1"><img src="" alt="Sample 2" /></button>
+                <button type="button" class="ref-sample-thumb" data-sample-idx="2"><img src="" alt="Sample 3" /></button>
+                <button type="button" class="ref-sample-thumb" data-sample-idx="3"><img src="" alt="Sample 4" /></button>
+              </div>
+              <div class="ref-modal-footer">
+                <button type="button" id="refPrevBtn" class="btn-ref-toggle">&larr; Prev</button>
+                <span id="refModalCounter" class="reference-sub">1 / 26</span>
+                <button type="button" id="refNextBtn" class="btn-ref-toggle">Next &rarr;</button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="transcription-section">
-        <div class="dwell-header">
-          <span class="section-label">TEXT TRANSCRIPTION OUTPUT</span>
-          <span class="shortcut-hint">Shortcuts: Space • Backspace • Esc (Clear)</span>
-        </div>
-        <div id="textBufferDisplay" class="text-buffer-display" aria-live="polite">
-          <span id="textBufferPlaceholder" class="text-placeholder">Hold a steady FSL sign for 1.0 second to transcribe...</span>
-          <span id="textBufferContent"></span><span class="blinking-cursor" aria-hidden="true"></span>
-        </div>
-      </div>
-
-      <div class="buffer-actions">
-        <button class="btn btn-slate" data-action="space">
-          <span>Space</span><kbd class="keycap">Space</kbd>
-        </button>
-        <button class="btn btn-slate" data-action="backspace">
-          <span>Backspace</span><kbd class="keycap">⌫</kbd>
-        </button>
-        <button class="btn btn-ghost-danger" data-action="clear">Clear</button>
-        <button id="copyBtn" class="btn btn-slate">Copy</button>
-        <button id="speakBtn" class="btn btn-primary">Speak</button>
-      </div>
-    </section>
-  </main>
-
-  <!-- Bottom Panel: FSL Alphabet Reference Grid (A–Z) -->
-  <section class="card cheatsheet-card">
-    <div class="cheatsheet-header">
-      <div class="cheatsheet-title-row">
-        <span class="section-label">FSL ALPHABET REFERENCE (A–Z)</span>
-        <span class="subtitle">Active classification highlights above {{ confidence_threshold }}% confidence</span>
-      </div>
-      <button id="toggleCheatBtn" class="btn btn-small btn-slate">Hide Reference</button>
-    </div>
-
-    <div id="cheatsheetGrid" class="cheatsheet-grid">
-      {% for letter in classes %}
-      <div class="cheat-tile" data-letter="{{ letter }}" title="Click to preview FSL '{{ letter }}'">
-        <span class="cheat-badge">{{ letter }}</span>
-        <img src="{{ url_for('api_reference', letter=letter) }}" alt="FSL {{ letter }}" loading="lazy" />
-      </div>
-      {% endfor %}
-    </div>
-  </section>
-
-  <!-- Reference Preview Modal -->
-  <div id="refModal" class="ref-modal hidden" role="dialog" aria-modal="true" aria-labelledby="refModalTitle">
-    <div class="ref-modal-backdrop" id="refModalBackdrop"></div>
-    <div class="ref-modal-card">
-      <div class="ref-modal-header">
-        <div class="ref-modal-title-wrap">
-          <span id="refModalBadge" class="ref-modal-badge">A</span>
-          <h2 id="refModalTitle">FSL Alphabet Reference</h2>
-        </div>
-        <button id="refModalClose" class="btn btn-small btn-slate" aria-label="Close preview">&times;</button>
-      </div>
-      <div class="ref-modal-body">
-        <img id="refModalImg" src="" alt="FSL reference preview" />
-      </div>
-      <div class="ref-sample-strip" id="refSampleStrip">
-        <button class="ref-sample-thumb active" data-sample-idx="0"><img src="" alt="Sample 1" /></button>
-        <button class="ref-sample-thumb" data-sample-idx="1"><img src="" alt="Sample 2" /></button>
-        <button class="ref-sample-thumb" data-sample-idx="2"><img src="" alt="Sample 3" /></button>
-        <button class="ref-sample-thumb" data-sample-idx="3"><img src="" alt="Sample 4" /></button>
-      </div>
-      <div class="ref-modal-footer">
-        <button id="refPrevBtn" class="btn btn-small btn-slate">&larr; Prev</button>
-        <span id="refModalCounter" class="subtitle">1 / 26</span>
-        <button id="refNextBtn" class="btn btn-small btn-slate">Next &rarr;</button>
+        </main>
       </div>
     </div>
   </div>
 
+  <!-- Backend Configuration -->
+  <div
+    id="fslConfigData"
+    data-hand-connections='{{ hand_connections | tojson }}'
+    data-confidence-threshold="{{ confidence_threshold }}"
+    hidden
+  ></div>
   <script>
+    const configEl = document.getElementById("fslConfigData");
     window.FSL_CONFIG = {
-      handConnections: {{ hand_connections | tojson }},
-      confidenceThreshold: {{ confidence_threshold }}
+      handConnections: JSON.parse(configEl.dataset.handConnections),
+      confidenceThreshold: Number(configEl.dataset.confidenceThreshold)
     };
   </script>
+
+  <!-- UI-Only Interactions (Settings Popover, Mirror Sync & Icon Safeguards) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Settings Gear Popover Toggle (Kumpas1 <-> Kumpas2)
+      const gearBtn = document.getElementById("settingsGearBtn");
+      const popover = document.getElementById("settingsPopover");
+
+      if (gearBtn && popover) {
+        gearBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isHidden = popover.classList.toggle("hidden");
+          gearBtn.setAttribute("aria-expanded", String(!isHidden));
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!popover.classList.contains("hidden") && !popover.contains(e.target) && !gearBtn.contains(e.target)) {
+            popover.classList.add("hidden");
+            gearBtn.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && !popover.classList.contains("hidden")) {
+            popover.classList.add("hidden");
+            gearBtn.setAttribute("aria-expanded", "false");
+          }
+        });
+      }
+
+      // 2. Sync Left-Rail Camera Button with #mirrorToggle
+      const mirrorQuickBtn = document.getElementById("mirrorQuickBtn");
+      const mirrorToggle = document.getElementById("mirrorToggle");
+      if (mirrorQuickBtn && mirrorToggle) {
+        mirrorQuickBtn.addEventListener("click", () => {
+          mirrorToggle.checked = !mirrorToggle.checked;
+          mirrorQuickBtn.classList.toggle("is-active", mirrorToggle.checked);
+          mirrorQuickBtn.title = mirrorToggle.checked ? "Mirror Preview (On)" : "Mirror Preview (Off)";
+          mirrorToggle.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+      }
+
+      // 3. Stage Voice Button delegates directly to #speakBtn
+      const stageVoiceBtn = document.getElementById("stageVoiceBtn");
+      const speakBtn = document.getElementById("speakBtn");
+      if (stageVoiceBtn && speakBtn) {
+        stageVoiceBtn.addEventListener("click", () => speakBtn.click());
+      }
+
+      // 4. Observe #toggleCamBtn text updates from app.js to toggle active recording ring
+      const toggleCamBtn = document.getElementById("toggleCamBtn");
+      if (toggleCamBtn) {
+        const syncCamState = () => {
+          const label = (toggleCamBtn.textContent || "").trim();
+          const isRunning = /stop/i.test(label);
+          toggleCamBtn.classList.toggle("is-recording", isRunning);
+          if (label) {
+            toggleCamBtn.title = label;
+            toggleCamBtn.setAttribute("aria-label", label);
+          }
+        };
+        syncCamState();
+        new MutationObserver(syncCamState).observe(toggleCamBtn, {
+          childList: true,
+          characterData: true,
+          subtree: true
+        });
+      }
+    });
+  </script>
+
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
