@@ -132,16 +132,24 @@ def api_reference(letter: str):
     letter = letter.upper()
     if letter not in CLASSES:
         return jsonify({"error": "Invalid letter"}), 404
+
+    idx = max(0, request.args.get("idx", default=0, type=int)) % 4
+
+    # Prefer bundled static reference samples so a fresh Git clone works without the full dataset
+    bundled_dir = BASE_DIR / "static" / "reference" / letter
+    bundled_img = bundled_dir / f"{idx}.jpg"
+    if bundled_img.exists():
+        return send_file(bundled_img, mimetype="image/jpeg")
+
     class_dir = DATASET_DIR / letter
+    if not class_dir.exists():
+        return jsonify({"error": "Sample not found"}), 404
     samples = [
         p for p in sorted(class_dir.iterdir()) if p.suffix.lower() in {".jpg", ".jpeg", ".png"}
     ]
     if not samples:
         return jsonify({"error": "Sample not found"}), 404
 
-    idx = request.args.get("idx", default=0, type=int)
-    idx = max(0, idx)
-    # Pick evenly spaced samples across the 450 images for diverse angles/lighting
     step = max(1, len(samples) // 4)
     chosen = samples[(idx * step) % len(samples)]
     return send_file(chosen, mimetype="image/jpeg")
