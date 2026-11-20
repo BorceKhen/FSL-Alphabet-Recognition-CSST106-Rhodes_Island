@@ -12,7 +12,7 @@ import numpy as np
 from flask import Flask, jsonify, render_template, request, send_file
 
 from src.app import ModelPredictor
-from src.config import CLASSES, CONFIDENCE_THRESHOLD, SPACE_PAUSE_SECONDS
+from src.config import CLASSES, CONFIDENCE_THRESHOLD, DATA_DIR, SPACE_PAUSE_SECONDS
 from src.features import HAND_CONNECTIONS, HandLandmarkExtractor
 from src.postprocess import WordFormationProcessor
 
@@ -134,10 +134,10 @@ def api_reference(letter: str):
         return jsonify({"error": "Invalid letter"}), 404
 
     idx = max(0, request.args.get("idx", default=0, type=int)) % 4
-    bundled_img = BASE_DIR / "static" / "reference" / letter / f"{idx}.jpg"
-    if not bundled_img.exists():
+    ref_img = DATA_DIR / "reference" / letter / f"{idx}.jpg"
+    if not ref_img.exists():
         return jsonify({"error": "Reference image not found"}), 404
-    return send_file(bundled_img, mimetype="image/jpeg")
+    return send_file(ref_img, mimetype="image/jpeg")
 
 
 def main() -> None:
