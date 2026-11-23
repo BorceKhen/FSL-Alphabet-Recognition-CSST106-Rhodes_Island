@@ -1,35 +1,81 @@
 (() => {
+  const cfg = window.FSL_CONFIG;
   const video = document.getElementById("webcam");
   const overlay = document.getElementById("overlay");
   const ctx = overlay.getContext("2d");
   const placeholder = document.getElementById("cameraPlaceholder");
   const toggleCamBtn = document.getElementById("toggleCamBtn");
-  const imageUploadInput = document.getElementById("imageUploadInput");
-  const statusBanner = document.getElementById("statusBanner");
+  const captureNowBtn = document.getElementById("captureNowBtn");
+  const uploadBtn = document.getElementById("uploadBtn");
+  const mediaUploadInput = document.getElementById("mediaUploadInput");
+  const testClipBtn = document.getElementById("testClipBtn");
+  const testClipPopover = document.getElementById("testClipPopover");
+  const closeTestClipBtn = document.getElementById("closeTestClipBtn");
+  const testClipList = document.getElementById("testClipList");
 
-  const modelSelect = document.getElementById("modelSelect");
-  const cameraSelect = document.getElementById("cameraSelect");
-  const claheToggle = document.getElementById("claheToggle");
-  const autoSpaceToggle = document.getElementById("autoSpaceToggle");
-  const skeletonToggle = document.getElementById("skeletonToggle");
-  const mirrorToggle = document.getElementById("mirrorToggle");
+  const modePhraseBtn = document.getElementById("modePhraseBtn");
+  const modeSpellBtn = document.getElementById("modeSpellBtn");
+  const openSignGuideBtn = document.getElementById("openSignGuideBtn");
+  const openLargeCardBtn = document.getElementById("openLargeCardBtn");
+  const showCardInlineBtn = document.getElementById("showCardInlineBtn");
+  const langToggleBtn = document.getElementById("langToggleBtn");
+  const langBadgeText = document.getElementById("langBadgeText");
+
+  const statusBanner = document.getElementById("statusBanner");
+  const claheBadge = document.getElementById("claheBadge");
   const latencyHud = document.getElementById("latencyHud");
   const fpsHud = document.getElementById("fpsHud");
-
   const dwellRingHud = document.getElementById("dwellRingHud");
   const dwellRingProgress = document.getElementById("dwellRingProgress");
-  const RING_CIRCUMFERENCE = 2 * Math.PI * 22; // r=22 -> 138.23
+  const RING_CIRCUMFERENCE = 2 * Math.PI * 22;
+
+  const settingsGearBtn = document.getElementById("settingsGearBtn");
+  const settingsPopover = document.getElementById("settingsPopover");
+  const stageMirrorBtn = document.getElementById("stageMirrorBtn");
+  const modelSelect = document.getElementById("modelSelect");
+  const cameraSelect = document.getElementById("cameraSelect");
+  const autoSpeakToggle = document.getElementById("autoSpeakToggle");
+  const autoSpaceToggle = document.getElementById("autoSpaceToggle");
+  const autoClaheToggle = document.getElementById("autoClaheToggle");
+  const claheToggle = document.getElementById("claheToggle");
+  const skeletonToggle = document.getElementById("skeletonToggle");
+  const mirrorToggle = document.getElementById("mirrorToggle");
 
   const detectedBox = document.getElementById("detectedBox");
+  const modeTag = document.getElementById("modeTag");
+  const detectedSub = document.getElementById("detectedSub");
   const detectedLetter = document.getElementById("detectedLetter");
+  const thresholdTag = document.getElementById("thresholdTag");
   const top3List = document.getElementById("top3List");
+  const quickPickRow = document.getElementById("quickPickRow");
 
-  const textBufferContent = document.getElementById("textBufferContent");
-  const textBufferPlaceholder = document.getElementById("textBufferPlaceholder");
-  const copyBtn = document.getElementById("copyBtn");
-  const speakBtn = document.getElementById("speakBtn");
-  const toggleCheatBtn = document.getElementById("toggleCheatBtn");
-  const cheatsheetGrid = document.getElementById("cheatsheetGrid");
+  const composerHint = document.getElementById("composerHint");
+  const composerTokens = document.getElementById("composerTokens");
+  const naturalPreview = document.getElementById("naturalPreview");
+  const autocompleteRow = document.getElementById("autocompleteRow");
+  const sendSpeakBtn = document.getElementById("sendSpeakBtn");
+  const spaceBtn = document.getElementById("spaceBtn");
+  const undoBtn = document.getElementById("undoBtn");
+  const clearComposerBtn = document.getElementById("clearComposerBtn");
+
+  const chatLog = document.getElementById("chatLog");
+  const exportChatBtn = document.getElementById("exportChatBtn");
+  const resetChatBtn = document.getElementById("resetChatBtn");
+  const listenerReplyForm = document.getElementById("listenerReplyForm");
+  const listenerInput = document.getElementById("listenerInput");
+  const micReplyBtn = document.getElementById("micReplyBtn");
+
+  const signGuideModal = document.getElementById("signGuideModal");
+  const signGuideBackdrop = document.getElementById("signGuideBackdrop");
+  const signGuideClose = document.getElementById("signGuideClose");
+  const guideTabPhrases = document.getElementById("guideTabPhrases");
+  const guideTabAlphabet = document.getElementById("guideTabAlphabet");
+  const guidePhrasesPane = document.getElementById("guidePhrasesPane");
+  const guideAlphabetPane = document.getElementById("guideAlphabetPane");
+  const guideSearchInput = document.getElementById("guideSearchInput");
+  const guideCategorySelect = document.getElementById("guideCategorySelect");
+  const guidePhraseGrid = document.getElementById("guidePhraseGrid");
+  const guideDetailCard = document.getElementById("guideDetailCard");
 
   const refModal = document.getElementById("refModal");
   const refModalBackdrop = document.getElementById("refModalBackdrop");
@@ -42,110 +88,79 @@
   const refNextBtn = document.getElementById("refNextBtn");
   const refSampleThumbs = Array.from(document.querySelectorAll(".ref-sample-thumb"));
   const cheatTiles = Array.from(document.querySelectorAll(".cheat-tile"));
-  let currentRefIdx = 0;
+
+  const largeCardModal = document.getElementById("largeCardModal");
+  const largeCardText = document.getElementById("largeCardText");
+  const largeCardSub = document.getElementById("largeCardSub");
+  const closeLargeCardBtn = document.getElementById("closeLargeCardBtn");
+  const largeCardCloseBtn2 = document.getElementById("largeCardCloseBtn2");
+  const largeCardSpeakBtn = document.getElementById("largeCardSpeakBtn");
 
   const captureCanvas = document.createElement("canvas");
   captureCanvas.width = 640;
   captureCanvas.height = 480;
   const captureCtx = captureCanvas.getContext("2d");
 
-  const connections = window.FSL_CONFIG.handConnections;
-  const threshold = window.FSL_CONFIG.confidenceThreshold;
-
+  let appMode = cfg.hasPhraseModel ? "phrase" : "alphabet"; // "phrase" | "alphabet"
+  let activeLang = "en"; // "en" | "fil"
   let stream = null;
   let running = false;
   let inFlight = false;
+  let loopGen = 0;
+  let loopTimer = null;
+  let activeController = null;
+  let consecutiveErrors = 0;
+  let confirmFlashTimer = null;
+  let manualCapturePending = false;
   let frameCount = 0;
   let lastFpsTime = performance.now();
-  let currentBufferText = "";
+  let currentRefIdx = 0;
 
-  async function populateCameras() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter((d) => d.kind === "videoinput");
-      if (videoDevices.length === 0) return;
+  let lastStatusKey = "";
+  let lastQuickPickKey = "";
+  let lastComposerKey = "";
+  let lastAutocompleteKey = "";
+  let lastDwellBucket = -1;
 
-      const currentVal = cameraSelect.value;
-      cameraSelect.innerHTML = "";
-      videoDevices.forEach((dev, idx) => {
-        const opt = document.createElement("option");
-        opt.value = dev.deviceId;
-        opt.textContent = dev.label || `Camera ${idx + 1}`;
-        cameraSelect.appendChild(opt);
-      });
-      if (currentVal) cameraSelect.value = currentVal;
-    } catch (err) {
-      console.warn("Could not enumerate cameras:", err);
-    }
+  const PHRASE_INTERVAL_MS = 90;   // ~11 FPS (matches FSL-105 training sampling rate)
+  const ALPHABET_INTERVAL_MS = 70; // ~14 FPS
+
+  let latestComposer = { tokens: [], text_buffer: "", formatted_en: "", formatted_fil: "" };
+  let latestConversation = [];
+  let catalogData = { signs: [], categories: [], test_samples: [] };
+
+  function speakText(text) {
+    const txt = (text || "").trim();
+    if (!txt || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(txt);
+    utter.lang = activeLang === "fil" ? "fil-PH" : "en-US";
+    utter.rate = 0.96;
+    window.speechSynthesis.speak(utter);
+  }
+
+  function triggerConfirmFlash(durationMs = 320) {
+    if (confirmFlashTimer) clearTimeout(confirmFlashTimer);
+    detectedBox.classList.add("confirmed-flash");
+    confirmFlashTimer = setTimeout(() => {
+      detectedBox.classList.remove("confirmed-flash");
+      confirmFlashTimer = null;
+    }, durationMs);
   }
 
   function setStatus(text, cls) {
+    const key = `${cls}|${text}`;
+    if (key === lastStatusKey) return;
+    lastStatusKey = key;
     statusBanner.textContent = text;
     statusBanner.className = `status-pill ${cls}`;
   }
 
-  function setBufferText(text) {
-    currentBufferText = text || "";
-    textBufferContent.textContent = currentBufferText;
-    textBufferPlaceholder.style.display = currentBufferText.length > 0 ? "none" : "flex";
-  }
-
-  function drawSkeleton(landmarks) {
-    ctx.clearRect(0, 0, overlay.width, overlay.height);
-    if (!skeletonToggle.checked || !landmarks || landmarks.length === 0) return;
-
-    const w = overlay.width;
-    const h = overlay.height;
-
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#38bdf8";
-
-    for (const [a, b] of connections) {
-      const p1 = landmarks[a];
-      const p2 = landmarks[b];
-      ctx.beginPath();
-      ctx.moveTo(p1[0] * w, p1[1] * h);
-      ctx.lineTo(p2[0] * w, p2[1] * h);
-      ctx.stroke();
-    }
-
-    landmarks.forEach((pt, idx) => {
-      ctx.beginPath();
-      ctx.arc(pt[0] * w, pt[1] * h, idx === 0 ? 5 : 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = idx === 0 ? "#38bdf8" : "#ffffff";
-      ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = "#38bdf8";
-      ctx.stroke();
-    });
-  }
-
-  function renderTop3(top3) {
-    const rows = top3List.querySelectorAll(".top3-row");
-    for (let i = 0; i < 3; i++) {
-      const item = top3[i];
-      const charEl = rows[i].querySelector(".top3-char");
-      const fillEl = rows[i].querySelector(".bar-fill");
-      const pctEl = rows[i].querySelector(".top3-pct");
-
-      if (item) {
-        const pct = Math.round(item.prob * 100);
-        charEl.textContent = item.label;
-        fillEl.style.width = `${pct}%`;
-        pctEl.textContent = `${pct}%`;
-      } else {
-        charEl.textContent = "-";
-        fillEl.style.width = "0%";
-        pctEl.textContent = "0%";
-      }
-    }
-  }
-
   function updateDwellRing(progress) {
-    if (progress > 0.01) {
+    const bucket = Math.round(Math.min(1, Math.max(0, progress)) * 50);
+    if (bucket === lastDwellBucket) return;
+    lastDwellBucket = bucket;
+    if (progress > 0.02) {
       dwellRingHud.classList.add("visible");
       const offset = RING_CIRCUMFERENCE * (1 - Math.min(1, progress));
       dwellRingProgress.style.strokeDashoffset = `${offset}`;
@@ -155,318 +170,875 @@
     }
   }
 
-  function highlightCheatTile(letter, aboveThreshold) {
-    document.querySelectorAll(".cheat-tile.active").forEach((el) => el.classList.remove("active"));
-    if (letter && aboveThreshold) {
-      const tile = document.querySelector(`.cheat-tile[data-letter="${letter}"]`);
-      if (tile) tile.classList.add("active");
+  function renderTop3(top3, activeThreshold) {
+    const rows = top3List.querySelectorAll(".top3-row");
+    const qpLabels = [];
+    for (let i = 0; i < 3; i++) {
+      const item = top3[i];
+      const charEl = rows[i].querySelector(".top3-char");
+      const fillEl = rows[i].querySelector(".bar-fill");
+      const pctEl = rows[i].querySelector(".top3-pct");
+      const threshEl = rows[i].querySelector(".threshold-line");
+      threshEl.style.left = `${activeThreshold}%`;
+
+      if (item) {
+        const pct = Math.round(item.prob * 100);
+        if (charEl.textContent !== item.label) {
+          charEl.textContent = item.label;
+          charEl.title = item.label;
+        }
+        fillEl.style.width = `${pct}%`;
+        pctEl.textContent = `${pct}%`;
+        if (appMode === "phrase") qpLabels.push(item.label);
+      } else {
+        if (charEl.textContent !== "—") charEl.textContent = "—";
+        fillEl.style.width = "0%";
+        pctEl.textContent = "0%";
+      }
+    }
+
+    const qpKey = `${appMode}|${qpLabels.join(",")}`;
+    if (qpKey !== lastQuickPickKey) {
+      lastQuickPickKey = qpKey;
+      quickPickRow.innerHTML = "";
+      if (appMode === "phrase") {
+        top3.slice(0, 3).forEach((item) => {
+          if (!item) return;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "quick-pick-btn";
+          btn.textContent = `+ ${item.label}`;
+          btn.title = `Add "${item.label}" to message`;
+          btn.addEventListener("click", () => pickPhraseToken(item));
+          quickPickRow.appendChild(btn);
+        });
+      }
     }
   }
 
-  function flashConfirmed() {
-    detectedBox.classList.add("confirmed-flash");
-    setTimeout(() => detectedBox.classList.remove("confirmed-flash"), 350);
+  function drawHandPoints(pts, color) {
+    if (!pts || pts.length !== 21) return;
+    const w = overlay.width;
+    const h = overlay.height;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = color;
+    for (const [a, b] of cfg.handConnections) {
+      ctx.beginPath();
+      ctx.moveTo(pts[a][0] * w, pts[a][1] * h);
+      ctx.lineTo(pts[b][0] * w, pts[b][1] * h);
+      ctx.stroke();
+    }
+    pts.forEach((pt, idx) => {
+      ctx.beginPath();
+      ctx.arc(pt[0] * w, pt[1] * h, idx === 0 ? 4.5 : 3, 0, Math.PI * 2);
+      ctx.fillStyle = idx === 0 ? color : "#ffffff";
+      ctx.fill();
+      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    });
   }
 
-  function updateMirrorStyle() {
-    video.style.transform = mirrorToggle.checked ? "scaleX(-1)" : "none";
+  function drawHolisticOverlay(data) {
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    if (!skeletonToggle.checked) return;
+    const w = overlay.width;
+    const h = overlay.height;
+    if (data.pose && data.pose.length === 15) {
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(251, 191, 36, 0.85)";
+      for (const [a, b] of cfg.upperBodyConnections) {
+        ctx.beginPath();
+        ctx.moveTo(data.pose[a][0] * w, data.pose[a][1] * h);
+        ctx.lineTo(data.pose[b][0] * w, data.pose[b][1] * h);
+        ctx.stroke();
+      }
+    }
+    drawHandPoints(data.left_hand, "#38bdf8");
+    drawHandPoints(data.right_hand, "#34d399");
   }
 
-  async function processLoop() {
-    if (!running) return;
-    if (!inFlight && video.readyState >= 2) {
-      inFlight = true;
-      try {
-        captureCtx.save();
-        if (mirrorToggle.checked) {
-          captureCtx.translate(captureCanvas.width, 0);
-          captureCtx.scale(-1, 1);
-        }
-        captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
-        captureCtx.restore();
+  function renderComposer(data) {
+    if (data.tokens !== undefined) latestComposer.tokens = data.tokens;
+    if (data.text_buffer !== undefined) latestComposer.text_buffer = data.text_buffer;
+    if (data.formatted_en !== undefined) latestComposer.formatted_en = data.formatted_en;
+    if (data.formatted_fil !== undefined) latestComposer.formatted_fil = data.formatted_fil;
 
-        const dataUrl = captureCanvas.toDataURL("image/jpeg", 0.72);
-        const res = await fetch("/api/predict", {
+    const previewTxt = activeLang === "fil" ? latestComposer.formatted_fil : latestComposer.formatted_en;
+    const tokLabels = (latestComposer.tokens || []).map((t) => t.label).join(",");
+    const compKey = `${appMode}|${activeLang}|${tokLabels}|${latestComposer.text_buffer}|${previewTxt}`;
+    if (compKey === lastComposerKey) return;
+    lastComposerKey = compKey;
+
+    composerTokens.innerHTML = "";
+    if (appMode === "phrase" || latestComposer.tokens.length > 0) {
+      latestComposer.tokens.forEach((tok) => {
+        const chip = document.createElement("span");
+        chip.className = "composer-token-chip";
+        chip.textContent = tok.label;
+        composerTokens.appendChild(chip);
+      });
+    } else if (latestComposer.text_buffer) {
+      const chip = document.createElement("span");
+      chip.className = "composer-token-chip";
+      chip.textContent = `SPELLED: ${latestComposer.text_buffer}`;
+      composerTokens.appendChild(chip);
+    }
+
+    if (previewTxt && previewTxt.trim()) {
+      naturalPreview.textContent = previewTxt;
+    } else {
+      naturalPreview.innerHTML = '<span class="text-placeholder-inline">Sign phrases or spell words to compose a natural message...</span>';
+    }
+  }
+
+  function renderAutocomplete(suggestions) {
+    const items = (appMode === "alphabet" && suggestions) ? suggestions : [];
+    const acKey = `${appMode}|${items.join(",")}`;
+    if (acKey === lastAutocompleteKey) return;
+    lastAutocompleteKey = acKey;
+
+    autocompleteRow.innerHTML = "";
+    if (items.length === 0) {
+      autocompleteRow.classList.add("hidden");
+      return;
+    }
+    autocompleteRow.classList.remove("hidden");
+    items.forEach((word) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "autocomplete-chip";
+      btn.textContent = word;
+      btn.addEventListener("click", async () => {
+        const res = await fetch("/api/composer/complete_word", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ word }),
+        });
+        const data = await res.json();
+        renderComposer(data);
+        renderAutocomplete([]);
+      });
+      autocompleteRow.appendChild(btn);
+    });
+  }
+
+  function renderConversation(conv) {
+    latestConversation = conv || [];
+    chatLog.innerHTML = "";
+    if (latestConversation.length === 0) {
+      chatLog.innerHTML = '<div class="chat-empty">Signed messages appear here and speak aloud. The hearing person can speak or type replies below.</div>';
+      return;
+    }
+
+    latestConversation.forEach((msg) => {
+      const bubble = document.createElement("div");
+      bubble.className = `chat-bubble ${msg.sender === "signer" ? "chat-bubble-signer" : "chat-bubble-listener"}`;
+
+      const meta = document.createElement("div");
+      meta.className = "chat-meta";
+      meta.innerHTML = `<strong>${msg.sender === "signer" ? "FSL Signer" : "Hearing Listener"}</strong><span>${msg.timestamp || ""}</span>`;
+      bubble.appendChild(meta);
+
+      const txtEl = document.createElement("div");
+      txtEl.className = "chat-main-text";
+      const displayText = msg.sender === "signer"
+        ? (activeLang === "fil" ? msg.text_fil : msg.text_en)
+        : msg.text;
+      txtEl.textContent = displayText;
+      bubble.appendChild(txtEl);
+
+      const actions = document.createElement("div");
+      actions.className = "chat-bubble-actions";
+
+      if (msg.sender === "signer") {
+        const spk = document.createElement("button");
+        spk.type = "button";
+        spk.className = "chat-chip-btn";
+        spk.textContent = "Speak";
+        spk.addEventListener("click", () => speakText(displayText));
+        actions.appendChild(spk);
+
+        const cardBtn = document.createElement("button");
+        cardBtn.type = "button";
+        cardBtn.className = "chat-chip-btn";
+        cardBtn.textContent = "Show Card";
+        cardBtn.addEventListener("click", () => openLargeCard(displayText, msg.tokens?.map((t) => t.label).join(" + ") || ""));
+        actions.appendChild(cardBtn);
+      } else if (msg.matched_signs && msg.matched_signs.length > 0) {
+        msg.matched_signs.forEach((sign) => {
+          const pill = document.createElement("button");
+          pill.type = "button";
+          pill.className = "chat-chip-btn";
+          pill.textContent = `Sign: ${sign.label}`;
+          pill.title = "View FSL sign animation";
+          pill.addEventListener("click", () => openSignGuideAt(sign.id));
+          actions.appendChild(pill);
+        });
+      }
+
+      if (actions.children.length > 0) bubble.appendChild(actions);
+      chatLog.appendChild(bubble);
+    });
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function syncModelOptions() {
+    modelSelect.innerHTML = "";
+    if (appMode === "phrase") {
+      modelSelect.add(new Option("FSLPhraseNet (Main)", "FSLPhraseNet"));
+      if (cfg.hasPhraseSvm) modelSelect.add(new Option("FSL-105 SVM (Baseline)", "FSL-105 SVM"));
+    } else {
+      modelSelect.add(new Option("Deep MLP (Main)", "Deep MLP"));
+      if (cfg.hasSvm) modelSelect.add(new Option("Baseline SVM", "Baseline SVM"));
+    }
+  }
+
+  function setMode(nextMode) {
+    appMode = nextMode;
+    modePhraseBtn.classList.toggle("is-active", appMode === "phrase");
+    modeSpellBtn.classList.toggle("is-active", appMode === "alphabet");
+
+    const isPhrase = appMode === "phrase";
+    modeTag.textContent = isPhrase ? "FSL-105 PHRASE" : "A–Z SPELL";
+    detectedSub.textContent = isPhrase ? "Raise hands to sign" : "Hold sign 1.0s";
+    detectedLetter.textContent = "—";
+    const thresh = isPhrase ? cfg.phraseThreshold : cfg.confidenceThreshold;
+    thresholdTag.innerHTML = `&tau; = ${thresh}%`;
+
+    captureNowBtn.classList.toggle("hidden", !isPhrase);
+    testClipBtn.classList.toggle("hidden", !isPhrase);
+    spaceBtn.classList.toggle("hidden", isPhrase);
+    mediaUploadInput.accept = isPhrase ? ".mov,.mp4,.avi,.mkv,video/*" : "image/*";
+
+    syncModelOptions();
+    lastQuickPickKey = "";
+    lastComposerKey = "";
+    lastAutocompleteKey = "";
+    renderTop3([], thresh);
+    renderAutocomplete([]);
+    renderComposer({});
+    updateDwellRing(0);
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    fetch("/api/composer/reset_phrase_capture", { method: "POST" }).catch(() => {});
+  }
+
+  async function pickPhraseToken(item) {
+    const res = await fetch("/api/composer/pick_phrase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(item),
+    });
+    const data = await res.json();
+    renderComposer(data);
+    triggerConfirmFlash(300);
+  }
+
+  async function sendAndSpeak() {
+    const res = await fetch("/api/composer/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: appMode }),
+    });
+    const data = await res.json();
+    if (!res.ok) return;
+    renderComposer(data);
+    renderAutocomplete([]);
+    renderConversation(data.conversation);
+    if (autoSpeakToggle.checked && data.message) {
+      const txt = activeLang === "fil" ? data.message.text_fil : data.message.text_en;
+      speakText(txt);
+    }
+  }
+
+  async function submitListenerReply(text) {
+    const trimmed = (text || "").trim();
+    if (!trimmed) return;
+    const res = await fetch("/api/composer/listener_reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: trimmed }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      renderConversation(data.conversation);
+      listenerInput.value = "";
+    }
+  }
+
+  function scheduleNextTick(gen, delayMs) {
+    if (!running || gen !== loopGen) return;
+    if (loopTimer) clearTimeout(loopTimer);
+    loopTimer = setTimeout(() => {
+      loopTimer = null;
+      processLoop(gen);
+    }, delayMs);
+  }
+
+  async function processLoop(gen) {
+    if (!running || gen !== loopGen) return;
+    if (document.hidden || video.readyState < 2 || inFlight) {
+      scheduleNextTick(gen, document.hidden ? 300 : 80);
+      return;
+    }
+
+    const tickStart = performance.now();
+    const targetInterval = appMode === "phrase" ? PHRASE_INTERVAL_MS : ALPHABET_INTERVAL_MS;
+    inFlight = true;
+
+    const controller = new AbortController();
+    activeController = controller;
+    const reqTimeout = setTimeout(() => controller.abort(), 4000);
+
+    try {
+      const capW = appMode === "phrase" ? 480 : 640;
+      const capH = appMode === "phrase" ? 360 : 480;
+      if (captureCanvas.width !== capW || captureCanvas.height !== capH) {
+        captureCanvas.width = capW;
+        captureCanvas.height = capH;
+      }
+
+      captureCtx.save();
+      if (appMode === "alphabet" && mirrorToggle.checked) {
+        captureCtx.translate(capW, 0);
+        captureCtx.scale(-1, 1);
+      }
+      captureCtx.drawImage(video, 0, 0, capW, capH);
+      captureCtx.restore();
+
+      const dataUrl = captureCanvas.toDataURL("image/jpeg", 0.68);
+
+      if (appMode === "phrase") {
+        const triggerManual = manualCapturePending;
+        manualCapturePending = false;
+        const res = await fetch("/api/predict_phrase_frame", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             image: dataUrl,
             model: modelSelect.value,
             clahe: claheToggle.checked,
+            auto_clahe: autoClaheToggle.checked,
+            mirrored: mirrorToggle.checked,
+            lang: activeLang,
+            manual_capture: triggerManual,
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!running || gen !== loopGen) return;
+
+        consecutiveErrors = 0;
+        claheBadge.classList.toggle("hidden", !data.clahe_assisted);
+        if (data.capture_state === "signing") {
+          setStatus(`Signing (${data.active_frames}f)`, "status-ok");
+        } else if (data.has_hands) {
+          setStatus("Hands Ready", "status-ok");
+        } else {
+          setStatus("Raise hands to sign", "status-warn");
+        }
+
+        drawHolisticOverlay(data);
+        renderTop3(data.top3 || [], cfg.phraseThreshold);
+        updateDwellRing(data.progress || 0);
+
+        if (data.top3 && data.top3.length > 0) {
+          const top = data.top3[0];
+          if (detectedLetter.textContent !== top.label) detectedLetter.textContent = top.label;
+          detectedSub.textContent = `${Math.round(top.prob * 100)}% • ${top.category}`;
+          detectedBox.classList.toggle("above-threshold", top.prob * 100 >= cfg.phraseThreshold);
+        } else {
+          if (detectedLetter.textContent !== "—") detectedLetter.textContent = "—";
+          detectedSub.textContent = data.capture_state === "signing" ? "Collecting motion..." : "Raise hands to sign";
+          detectedBox.classList.remove("above-threshold");
+        }
+
+        if (data.just_confirmed) triggerConfirmFlash(350);
+        renderComposer(data);
+        latencyHud.textContent = `Latency: ${data.latency_ms} ms`;
+      } else {
+        const res = await fetch("/api/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            image: dataUrl,
+            model: modelSelect.value,
+            clahe: claheToggle.checked,
+            auto_clahe: autoClaheToggle.checked,
             auto_space: autoSpaceToggle.checked,
           }),
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        if (!running || gen !== loopGen) return;
 
-        if (!running) return;
+        consecutiveErrors = 0;
+        claheBadge.classList.toggle("hidden", !data.clahe_assisted);
+        if (data.hand_detected) setStatus("Hand Tracked", "status-ok");
+        else setStatus("No hand detected", "status-warn");
 
-        if (data.hand_detected) {
-          setStatus("Hand Tracked", "status-ok");
-        } else {
-          setStatus("No hand detected — adjust position or lighting", "status-warn");
-        }
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        if (skeletonToggle.checked) drawHandPoints(data.landmarks, "#38bdf8");
+        renderTop3(data.top3 || [], cfg.confidenceThreshold);
 
-        drawSkeleton(data.landmarks);
-        renderTop3(data.top3 || []);
-
-        const activeChar = data.smoothed_label || data.raw_label || "-";
-        const aboveThreshold = (data.raw_confidence || 0) * 100 >= threshold;
-
-        detectedLetter.textContent = activeChar;
+        const activeChar = data.smoothed_label || data.raw_label || "—";
+        const aboveThreshold = (data.raw_confidence || 0) * 100 >= cfg.confidenceThreshold;
+        if (detectedLetter.textContent !== activeChar) detectedLetter.textContent = activeChar;
+        detectedSub.textContent = data.hand_detected ? `${Math.round((data.raw_confidence || 0) * 100)}% conf` : "Hold sign 1.0s";
         detectedBox.classList.toggle("above-threshold", Boolean(data.hand_detected && aboveThreshold));
-        highlightCheatTile(data.smoothed_label || data.raw_label, aboveThreshold);
 
-        if (data.just_confirmed) {
-          flashConfirmed();
-        }
-
-        const dwellRatio = data.dwell_progress || 0;
-        updateDwellRing(dwellRatio);
-
-        if (data.text_buffer !== undefined) {
-          setBufferText(data.text_buffer);
-        }
+        if (data.just_confirmed) triggerConfirmFlash(350);
+        updateDwellRing(data.dwell_progress || 0);
+        renderComposer(data);
+        renderAutocomplete(data.suggestions || []);
         latencyHud.textContent = `Latency: ${data.latency_ms} ms`;
-
-        frameCount++;
-        const now = performance.now();
-        if (now - lastFpsTime >= 1000) {
-          fpsHud.textContent = `FPS: ${frameCount}`;
-          frameCount = 0;
-          lastFpsTime = now;
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        inFlight = false;
       }
+
+      frameCount++;
+      const now = performance.now();
+      if (now - lastFpsTime >= 1000) {
+        fpsHud.textContent = `FPS: ${frameCount}`;
+        frameCount = 0;
+        lastFpsTime = now;
+      }
+    } catch (err) {
+      if (err && err.name !== "AbortError") {
+        consecutiveErrors++;
+        console.warn("Inference request error:", err);
+        setStatus("Reconnecting to server...", "status-warn");
+      }
+    } finally {
+      clearTimeout(reqTimeout);
+      if (activeController === controller) activeController = null;
+      inFlight = false;
     }
-    requestAnimationFrame(processLoop);
+
+    if (!running || gen !== loopGen) return;
+    const elapsed = performance.now() - tickStart;
+    const backoff = consecutiveErrors > 0 ? Math.min(3000, 600 * Math.pow(2, consecutiveErrors - 1)) : 0;
+    const nextDelay = Math.max(16, targetInterval - elapsed, backoff);
+    scheduleNextTick(gen, nextDelay);
+  }
+
+  async function populateCameras() {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const vids = devices.filter((d) => d.kind === "videoinput");
+      if (!vids.length) return;
+      const prev = cameraSelect.value;
+      cameraSelect.innerHTML = "";
+      vids.forEach((dev, i) => {
+        const opt = document.createElement("option");
+        opt.value = dev.deviceId;
+        opt.textContent = dev.label || `Camera ${i + 1}`;
+        cameraSelect.appendChild(opt);
+      });
+      if (prev) cameraSelect.value = prev;
+    } catch {}
   }
 
   async function startCamera() {
+    if (running) stopCamera();
     try {
-      const videoConstraints = { width: 640, height: 480 };
-      if (cameraSelect.value) {
-        videoConstraints.deviceId = { exact: cameraSelect.value };
-      }
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: videoConstraints,
-        audio: false,
-      });
+      const vc = { width: 640, height: 480 };
+      if (cameraSelect.value) vc.deviceId = { exact: cameraSelect.value };
+      stream = await navigator.mediaDevices.getUserMedia({ video: vc, audio: false });
       await populateCameras();
       video.srcObject = stream;
-      updateMirrorStyle();
+      video.style.transform = mirrorToggle.checked ? "scaleX(-1)" : "none";
       placeholder.style.display = "none";
       running = true;
+      consecutiveErrors = 0;
+      frameCount = 0;
+      lastFpsTime = performance.now();
+      loopGen += 1;
+      const myGen = loopGen;
       toggleCamBtn.textContent = "Stop Camera";
+      toggleCamBtn.classList.add("is-recording");
       setStatus("Camera Active", "status-ok");
-      requestAnimationFrame(processLoop);
+      scheduleNextTick(myGen, 60);
     } catch (err) {
-      setStatus("Camera permission denied or unavailable", "status-warn");
+      setStatus("Camera unavailable — use Test Clip or Upload", "status-warn");
       alert("Could not access webcam: " + err.message);
     }
   }
 
   function stopCamera() {
     running = false;
+    loopGen += 1;
+    if (loopTimer) {
+      clearTimeout(loopTimer);
+      loopTimer = null;
+    }
+    if (activeController) {
+      activeController.abort();
+      activeController = null;
+    }
+    inFlight = false;
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
       stream = null;
     }
+    video.srcObject = null;
     ctx.clearRect(0, 0, overlay.width, overlay.height);
     updateDwellRing(0);
-    detectedBox.classList.remove("above-threshold");
-    detectedLetter.textContent = "-";
-    renderTop3([]);
-    highlightCheatTile(null, false);
-    latencyHud.textContent = "Latency: -- ms";
-    fpsHud.textContent = "FPS: --";
+    claheBadge.classList.add("hidden");
     placeholder.style.display = "flex";
     toggleCamBtn.textContent = "Start Camera";
+    toggleCamBtn.classList.remove("is-recording");
     setStatus("Camera Offline", "status-idle");
+    latencyHud.textContent = "Latency: -- ms";
+    fpsHud.textContent = "FPS: --";
+    fetch("/api/composer/reset_phrase_capture", { method: "POST" }).catch(() => {});
   }
 
-  toggleCamBtn.addEventListener("click", () => {
-    if (running) stopCamera();
-    else startCamera();
+  async function runPhraseVideoSample(samplePath, groundTruth) {
+    testClipPopover.classList.add("hidden");
+    setStatus(`Analyzing ${groundTruth || "clip"}...`, "status-ok");
+    const res = await fetch("/api/predict_phrase_video", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sample_path: samplePath, model: modelSelect.value, append: true }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setStatus(data.error || "Failed", "status-warn");
+      return;
+    }
+    const top1 = data.top1;
+    renderTop3((data.top5 || []).slice(0, 3), cfg.phraseThreshold);
+    if (top1) {
+      detectedLetter.textContent = top1.label;
+      const gtTag = data.ground_truth ? ` (True: ${data.ground_truth})` : "";
+      detectedSub.textContent = `${Math.round(top1.prob * 100)}%${gtTag}`;
+      detectedBox.classList.add("confirmed-flash");
+      setTimeout(() => detectedBox.classList.remove("confirmed-flash"), 400);
+    }
+    renderComposer(data);
+    latencyHud.textContent = `Latency: ${data.latency_ms} ms`;
+    setStatus(`Matched: ${top1 ? top1.label : "Done"}`, "status-ok");
+  }
+
+  async function loadCatalogAndChat() {
+    try {
+      const [catRes, convRes] = await Promise.all([fetch("/api/fsl105/catalog"), fetch("/api/conversation")]);
+      if (catRes.ok) {
+        catalogData = await catRes.json();
+        populateSignGuide();
+        populateTestClips();
+      }
+      if (convRes.ok) {
+        const cdata = await convRes.json();
+        renderComposer(cdata);
+        renderConversation(cdata.conversation);
+      }
+    } catch (err) {
+      console.warn("Catalog/chat init error:", err);
+    }
+  }
+
+  function populateTestClips() {
+    testClipList.innerHTML = "";
+    (catalogData.test_samples || []).forEach((s) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "test-clip-item";
+      btn.innerHTML = `<span>${s.label}</span><span class="test-clip-cat">${s.category}</span>`;
+      btn.addEventListener("click", () => runPhraseVideoSample(s.vid_path, s.label));
+      testClipList.appendChild(btn);
+    });
+  }
+
+  function populateSignGuide() {
+    guideCategorySelect.innerHTML = `<option value="ALL">All Categories (${catalogData.signs.length})</option>`;
+    (catalogData.categories || []).forEach((cat) => {
+      guideCategorySelect.add(new Option(cat, cat));
+    });
+    renderGuideGrid();
+  }
+
+  function renderGuideGrid() {
+    const q = (guideSearchInput.value || "").trim().toLowerCase();
+    const cat = guideCategorySelect.value || "ALL";
+    guidePhraseGrid.innerHTML = "";
+
+    const filtered = (catalogData.signs || []).filter((s) => {
+      const matchCat = cat === "ALL" || s.category === cat;
+      const matchQ = !q || s.label.toLowerCase().includes(q) || s.en.toLowerCase().includes(q) || s.fil.toLowerCase().includes(q);
+      return matchCat && matchQ;
+    });
+
+    filtered.forEach((s) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "guide-sign-card";
+      card.dataset.signId = String(s.id);
+      card.innerHTML = `
+        <img src="${s.thumb_url}" alt="${s.label}" loading="lazy" />
+        <div class="guide-sign-card-body">
+          <div class="guide-sign-label">${s.label}</div>
+          <div class="guide-sign-cat">${s.category}</div>
+        </div>
+      `;
+      card.addEventListener("click", () => showGuideSignDetail(s));
+      guidePhraseGrid.appendChild(card);
+    });
+  }
+
+  function showGuideSignDetail(sign) {
+    document.querySelectorAll(".guide-sign-card.is-selected").forEach((el) => el.classList.remove("is-selected"));
+    const el = guidePhraseGrid.querySelector(`[data-sign-id="${sign.id}"]`);
+    if (el) el.classList.add("is-selected");
+
+    guideDetailCard.innerHTML = `
+      <video class="guide-detail-video" src="${sign.video_url}" controls autoplay loop muted playsinline></video>
+      <div><span class="mode-badge">${sign.category}</span></div>
+      <div class="fw-bold fs-6">${sign.label}</div>
+      <div class="small"><strong>English:</strong> ${sign.en}</div>
+      <div class="small"><strong>Filipino:</strong> ${sign.fil}</div>
+      <button type="button" id="guideAddSignBtn" class="action-pill-btn action-pill-primary mt-1">Add to Message</button>
+    `;
+    document.getElementById("guideAddSignBtn").addEventListener("click", async () => {
+      await pickPhraseToken(sign);
+      signGuideModal.classList.add("hidden");
+    });
+  }
+
+  function openSignGuideAt(signId) {
+    signGuideModal.classList.remove("hidden");
+    guideTabPhrases.classList.add("is-active");
+    guideTabAlphabet.classList.remove("is-active");
+    guidePhrasesPane.classList.remove("hidden");
+    guideAlphabetPane.classList.add("hidden");
+
+    const found = (catalogData.signs || []).find((s) => s.id === signId);
+    if (found) showGuideSignDetail(found);
+  }
+
+  function openLargeCard(mainText, subText) {
+    const activeTxt = mainText || (activeLang === "fil" ? latestComposer.formatted_fil : latestComposer.formatted_en);
+    largeCardText.textContent = (activeTxt && activeTxt.trim()) ? activeTxt : "Ready to communicate";
+    largeCardSub.textContent = subText || (activeLang === "fil" ? "Filipino Output" : "English Output");
+    largeCardModal.classList.remove("hidden");
+  }
+
+  // Event Wiring
+  modePhraseBtn.addEventListener("click", () => setMode("phrase"));
+  modeSpellBtn.addEventListener("click", () => setMode("alphabet"));
+  toggleCamBtn.addEventListener("click", () => (running ? stopCamera() : startCamera()));
+  captureNowBtn.addEventListener("click", () => { if (running) manualCapturePending = true; });
+
+  langToggleBtn.addEventListener("click", () => {
+    activeLang = activeLang === "en" ? "fil" : "en";
+    langBadgeText.textContent = activeLang.toUpperCase();
+    composerHint.textContent = activeLang === "fil" ? "Natural FIL output" : "Natural EN output";
+    renderComposer({});
+    renderConversation(latestConversation);
   });
 
-  if (imageUploadInput) {
-    imageUploadInput.addEventListener("change", (e) => {
+  stageMirrorBtn.addEventListener("click", () => {
+    mirrorToggle.checked = !mirrorToggle.checked;
+    stageMirrorBtn.classList.toggle("is-active", mirrorToggle.checked);
+    stageMirrorBtn.title = mirrorToggle.checked ? "Mirror View (On)" : "Mirror View (Off)";
+    video.style.transform = mirrorToggle.checked ? "scaleX(-1)" : "none";
+  });
+
+  settingsGearBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isHidden = settingsPopover.classList.toggle("hidden");
+    settingsGearBtn.setAttribute("aria-expanded", String(!isHidden));
+  });
+  document.addEventListener("click", (e) => {
+    if (!settingsPopover.classList.contains("hidden") && !settingsPopover.contains(e.target) && !settingsGearBtn.contains(e.target)) {
+      settingsPopover.classList.add("hidden");
+    }
+  });
+
+  testClipBtn.addEventListener("click", () => testClipPopover.classList.toggle("hidden"));
+  closeTestClipBtn.addEventListener("click", () => testClipPopover.classList.add("hidden"));
+
+  uploadBtn.addEventListener("click", () => mediaUploadInput.click());
+  mediaUploadInput.addEventListener("change", async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     if (running) stopCamera();
 
-    const img = new Image();
-    img.onload = async () => {
-      placeholder.style.display = "none";
-      captureCtx.clearRect(0, 0, captureCanvas.width, captureCanvas.height);
-      const scale = Math.min(captureCanvas.width / img.width, captureCanvas.height / img.height);
-      const dw = img.width * scale;
-      const dh = img.height * scale;
-      const dx = (captureCanvas.width - dw) / 2;
-      const dy = (captureCanvas.height - dh) / 2;
-      captureCtx.fillStyle = "#090d12";
-      captureCtx.fillRect(0, 0, captureCanvas.width, captureCanvas.height);
-      captureCtx.drawImage(img, dx, dy, dw, dh);
-
-      // Draw uploaded image onto overlay, then draw landmarks on top after response
-      const dataUrl = captureCanvas.toDataURL("image/jpeg", 0.92);
-      const res = await fetch("/api/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: dataUrl,
-          model: modelSelect.value,
-          clahe: claheToggle.checked,
-          auto_space: false,
-        }),
-      });
+    if (appMode === "phrase") {
+      setStatus("Analyzing uploaded video...", "status-ok");
+      const fd = new FormData();
+      fd.append("video", file);
+      fd.append("model", modelSelect.value);
+      fd.append("append", "true");
+      const res = await fetch("/api/predict_phrase_video", { method: "POST", body: fd });
       const data = await res.json();
-
-      ctx.clearRect(0, 0, overlay.width, overlay.height);
-      ctx.drawImage(captureCanvas, 0, 0, overlay.width, overlay.height);
-      if (skeletonToggle.checked && data.landmarks && data.landmarks.length > 0) {
-        const w = overlay.width;
-        const h = overlay.height;
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#38bdf8";
-        for (const [a, b] of connections) {
-          ctx.beginPath();
-          ctx.moveTo(data.landmarks[a][0] * w, data.landmarks[a][1] * h);
-          ctx.lineTo(data.landmarks[b][0] * w, data.landmarks[b][1] * h);
-          ctx.stroke();
+      if (res.ok) {
+        renderTop3((data.top5 || []).slice(0, 3), cfg.phraseThreshold);
+        if (data.top1) {
+          detectedLetter.textContent = data.top1.label;
+          detectedSub.textContent = `${Math.round(data.top1.prob * 100)}%`;
         }
-        data.landmarks.forEach((pt, idx) => {
-          ctx.beginPath();
-          ctx.arc(pt[0] * w, pt[1] * h, idx === 0 ? 5 : 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = idx === 0 ? "#38bdf8" : "#ffffff";
-          ctx.fill();
-          ctx.lineWidth = 1.5;
-          ctx.strokeStyle = "#38bdf8";
-          ctx.stroke();
-        });
+        renderComposer(data);
+        latencyHud.textContent = `Latency: ${data.latency_ms} ms`;
+        setStatus(`Uploaded: ${data.top1 ? data.top1.label : "Done"}`, "status-ok");
+      } else {
+        setStatus(data.error || "Video error", "status-warn");
       }
-
-      if (data.hand_detected) setStatus("Image Evaluated", "status-ok");
-      else setStatus("No hand detected in uploaded image", "status-warn");
-
-      renderTop3(data.top3 || []);
-      const activeChar = data.raw_label || "-";
-      const aboveThreshold = (data.raw_confidence || 0) * 100 >= threshold;
-      detectedLetter.textContent = activeChar;
-      detectedBox.classList.toggle("above-threshold", Boolean(data.hand_detected && aboveThreshold));
-      highlightCheatTile(data.raw_label, aboveThreshold);
-      latencyHud.textContent = `Latency: ${data.latency_ms} ms`;
-      fpsHud.textContent = "Mode: Image";
-      URL.revokeObjectURL(img.src);
-    };
+    } else {
+      const img = new Image();
+      img.onload = async () => {
+        placeholder.style.display = "none";
+        captureCtx.fillStyle = "#090d12";
+        captureCtx.fillRect(0, 0, captureCanvas.width, captureCanvas.height);
+        const s = Math.min(captureCanvas.width / img.width, captureCanvas.height / img.height);
+        captureCtx.drawImage(img, (captureCanvas.width - img.width * s) / 2, (captureCanvas.height - img.height * s) / 2, img.width * s, img.height * s);
+        const res = await fetch("/api/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: captureCanvas.toDataURL("image/jpeg", 0.92), model: modelSelect.value, clahe: claheToggle.checked, auto_clahe: autoClaheToggle.checked, auto_space: false }),
+        });
+        const data = await res.json();
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        ctx.drawImage(captureCanvas, 0, 0, overlay.width, overlay.height);
+        if (skeletonToggle.checked) drawHandPoints(data.landmarks, "#38bdf8");
+        renderTop3(data.top3 || [], cfg.confidenceThreshold);
+        detectedLetter.textContent = data.raw_label || "—";
+        renderComposer(data);
+        renderAutocomplete(data.suggestions || []);
+        setStatus(data.hand_detected ? "Image Evaluated" : "No hand detected", data.hand_detected ? "status-ok" : "status-warn");
+        URL.revokeObjectURL(img.src);
+      };
       img.src = URL.createObjectURL(file);
-      imageUploadInput.value = "";
+    }
+    mediaUploadInput.value = "";
+  });
+
+  sendSpeakBtn.addEventListener("click", sendAndSpeak);
+  spaceBtn.addEventListener("click", async () => {
+    const res = await fetch("/api/buffer/space", { method: "POST" });
+    renderComposer(await res.json());
+  });
+  undoBtn.addEventListener("click", async () => {
+    const res = await fetch("/api/composer/undo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: appMode }),
+    });
+    renderComposer(await res.json());
+  });
+  clearComposerBtn.addEventListener("click", async () => {
+    const res = await fetch("/api/composer/clear", { method: "POST" });
+    renderComposer(await res.json());
+    renderAutocomplete([]);
+  });
+
+  listenerReplyForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    submitListenerReply(listenerInput.value);
+  });
+  document.querySelectorAll(".quick-reply-chip").forEach((btn) => {
+    btn.addEventListener("click", () => submitListenerReply(btn.dataset.reply));
+  });
+
+  resetChatBtn.addEventListener("click", async () => {
+    const res = await fetch("/api/composer/reset_chat", { method: "POST" });
+    const data = await res.json();
+    renderConversation(data.conversation);
+  });
+
+  exportChatBtn.addEventListener("click", () => {
+    if (!latestConversation.length) return;
+    const lines = latestConversation.map((m) =>
+      `[${m.timestamp}] ${m.sender === "signer" ? "FSL Signer" : "Listener"}: ${m.sender === "signer" ? m.text_en : m.text}`
+    );
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "kumpas_conversation.txt";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  // Web Speech API Microphone for Hearing Listener
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    micReplyBtn.title = "Voice-to-text requires Chrome/Edge Web Speech API";
+    micReplyBtn.style.opacity = "0.55";
+  } else {
+    const rec = new SpeechRec();
+    rec.lang = "en-US";
+    rec.interimResults = false;
+    rec.onstart = () => micReplyBtn.classList.add("is-listening");
+    rec.onend = () => micReplyBtn.classList.remove("is-listening");
+    rec.onresult = (ev) => {
+      const transcript = ev.results[0][0].transcript;
+      listenerInput.value = transcript;
+      submitListenerReply(transcript);
+    };
+    micReplyBtn.addEventListener("click", () => {
+      rec.lang = activeLang === "fil" ? "fil-PH" : "en-US";
+      try { rec.start(); } catch {}
     });
   }
 
-  cameraSelect.addEventListener("change", () => {
-    if (running) {
-      stopCamera();
-      startCamera();
-    }
+  // Sign Guide & A-Z Reference Modal
+  openSignGuideBtn.addEventListener("click", () => signGuideModal.classList.remove("hidden"));
+  signGuideClose.addEventListener("click", () => signGuideModal.classList.add("hidden"));
+  signGuideBackdrop.addEventListener("click", () => signGuideModal.classList.add("hidden"));
+  guideTabPhrases.addEventListener("click", () => {
+    guideTabPhrases.classList.add("is-active");
+    guideTabAlphabet.classList.remove("is-active");
+    guidePhrasesPane.classList.remove("hidden");
+    guideAlphabetPane.classList.add("hidden");
   });
-
-  mirrorToggle.addEventListener("change", updateMirrorStyle);
-  skeletonToggle.addEventListener("change", () => {
-    if (!skeletonToggle.checked) ctx.clearRect(0, 0, overlay.width, overlay.height);
+  guideTabAlphabet.addEventListener("click", () => {
+    guideTabAlphabet.classList.add("is-active");
+    guideTabPhrases.classList.remove("is-active");
+    guideAlphabetPane.classList.remove("hidden");
+    guidePhrasesPane.classList.add("hidden");
   });
+  guideSearchInput.addEventListener("input", renderGuideGrid);
+  guideCategorySelect.addEventListener("change", renderGuideGrid);
 
-  async function bufferAction(action) {
-    const res = await fetch(`/api/buffer/${action}`, { method: "POST" });
-    const data = await res.json();
-    if (data.text_buffer !== undefined) setBufferText(data.text_buffer);
+  function selectRefSample(letter, idx) {
+    refModalImg.src = `/api/reference/${letter}?idx=${idx}`;
+    refSampleThumbs.forEach((b, i) => b.classList.toggle("active", i === idx));
   }
-
-  document.querySelectorAll("[data-action]").forEach((btn) => {
-    btn.addEventListener("click", () => bufferAction(btn.dataset.action));
-  });
-
-  copyBtn.addEventListener("click", async () => {
-    await navigator.clipboard.writeText(currentBufferText);
-    copyBtn.textContent = "Copied";
-    setTimeout(() => (copyBtn.textContent = "Copy"), 1200);
-  });
-
-  speakBtn.addEventListener("click", () => {
-    const txt = currentBufferText.trim();
-    if (!txt || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(txt);
-    utter.rate = 0.95;
-    window.speechSynthesis.speak(utter);
-  });
-
-  toggleCheatBtn.addEventListener("click", () => {
-    const hidden = cheatsheetGrid.classList.toggle("hidden");
-    toggleCheatBtn.textContent = hidden ? "Show Reference" : "Hide Reference";
-  });
-
-  function selectRefSample(letter, sampleIdx) {
-    refModalImg.src = `/api/reference/${letter}?idx=${sampleIdx}`;
-    refModalImg.alt = `FSL Sign ${letter} (Sample ${sampleIdx + 1})`;
-    refSampleThumbs.forEach((btn, i) => btn.classList.toggle("active", i === sampleIdx));
-  }
-
   function openRefModal(index) {
     currentRefIdx = (index + cheatTiles.length) % cheatTiles.length;
-    const tile = cheatTiles[currentRefIdx];
-    const letter = tile.dataset.letter;
+    const letter = cheatTiles[currentRefIdx].dataset.letter;
     refModalBadge.textContent = letter;
-    refModalTitle.textContent = `FSL Sign Reference — "${letter}"`;
-    refSampleThumbs.forEach((btn, i) => {
-      const thumbImg = btn.querySelector("img");
-      thumbImg.src = `/api/reference/${letter}?idx=${i}`;
-      thumbImg.alt = `FSL ${letter} sample ${i + 1}`;
-    });
+    refModalTitle.textContent = `FSL Alphabet Reference — "${letter}"`;
+    refSampleThumbs.forEach((b, i) => { b.querySelector("img").src = `/api/reference/${letter}?idx=${i}`; });
     selectRefSample(letter, 0);
     refModalCounter.textContent = `${currentRefIdx + 1} / ${cheatTiles.length}`;
     refModal.classList.remove("hidden");
   }
-
-  refSampleThumbs.forEach((btn, i) => {
-    btn.addEventListener("click", () => {
-      const letter = cheatTiles[currentRefIdx].dataset.letter;
-      selectRefSample(letter, i);
-    });
-  });
-
-  function closeRefModal() {
-    refModal.classList.add("hidden");
-  }
-
-  cheatTiles.forEach((tile, idx) => {
-    tile.addEventListener("click", () => openRefModal(idx));
-  });
-  refModalClose.addEventListener("click", closeRefModal);
-  refModalBackdrop.addEventListener("click", closeRefModal);
+  cheatTiles.forEach((tile, idx) => tile.addEventListener("click", () => openRefModal(idx)));
+  refSampleThumbs.forEach((b, i) => b.addEventListener("click", () => selectRefSample(cheatTiles[currentRefIdx].dataset.letter, i)));
+  refModalClose.addEventListener("click", () => refModal.classList.add("hidden"));
+  refModalBackdrop.addEventListener("click", () => refModal.classList.add("hidden"));
   refPrevBtn.addEventListener("click", () => openRefModal(currentRefIdx - 1));
   refNextBtn.addEventListener("click", () => openRefModal(currentRefIdx + 1));
 
-  window.addEventListener("keydown", (e) => {
-    if (!refModal.classList.contains("hidden")) {
-      if (e.code === "Escape") closeRefModal();
-      else if (e.code === "ArrowLeft") openRefModal(currentRefIdx - 1);
-      else if (e.code === "ArrowRight") openRefModal(currentRefIdx + 1);
-      return;
-    }
-    if (e.code === "Space") {
-      e.preventDefault();
-      bufferAction("space");
-    } else if (e.code === "Backspace") {
-      e.preventDefault();
-      bufferAction("backspace");
-    } else if (e.code === "Escape") {
-      bufferAction("clear");
-    }
+  // Large Card Modal
+  openLargeCardBtn.addEventListener("click", () => openLargeCard());
+  showCardInlineBtn.addEventListener("click", () => openLargeCard());
+  closeLargeCardBtn.addEventListener("click", () => largeCardModal.classList.add("hidden"));
+  largeCardCloseBtn2.addEventListener("click", () => largeCardModal.classList.add("hidden"));
+  largeCardSpeakBtn.addEventListener("click", () => speakText(largeCardText.textContent));
+
+  cameraSelect.addEventListener("change", () => {
+    if (running) { stopCamera(); startCamera(); }
+  });
+  skeletonToggle.addEventListener("change", () => {
+    if (!skeletonToggle.checked) ctx.clearRect(0, 0, overlay.width, overlay.height);
   });
 
+  setMode(appMode);
   populateCameras();
+  loadCatalogAndChat();
 })();
