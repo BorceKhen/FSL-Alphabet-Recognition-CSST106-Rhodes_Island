@@ -1,0 +1,22 @@
+{
+  "best_C": 20.0,
+  "best_val_acc": 0.9258,
+  "trials": [
+    {
+      "C": 1.0,
+      "val_accuracy": 0.7969
+    },
+    {
+      "C": 5.0,
+      "val_accuracy": 0.918
+    },
+    {
+      "C": 20.0,
+      "val_accuracy": 0.9258
+    },
+    {
+      "C": 50.0,
+      "val_accuracy": 0.9258
+    }
+  ]
+}

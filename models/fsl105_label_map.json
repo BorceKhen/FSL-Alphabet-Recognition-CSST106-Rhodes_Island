@@ -1,0 +1,632 @@
+{
+  "0": {
+    "id": 0,
+    "raw_label": "GOOD MORNING",
+    "label": "GOOD MORNING",
+    "category": "GREETING"
+  },
+  "1": {
+    "id": 1,
+    "raw_label": "GOOD AFTERNOON",
+    "label": "GOOD AFTERNOON",
+    "category": "GREETING"
+  },
+  "2": {
+    "id": 2,
+    "raw_label": "GOOD EVENING",
+    "label": "GOOD EVENING",
+    "category": "GREETING"
+  },
+  "3": {
+    "id": 3,
+    "raw_label": "HELLO",
+    "label": "HELLO",
+    "category": "GREETING"
+  },
+  "4": {
+    "id": 4,
+    "raw_label": "HOW ARE YOU",
+    "label": "HOW ARE YOU",
+    "category": "GREETING"
+  },
+  "5": {
+    "id": 5,
+    "raw_label": "IM FINE",
+    "label": "I'M FINE",
+    "category": "GREETING"
+  },
+  "6": {
+    "id": 6,
+    "raw_label": "NICE TO MEET YOU",
+    "label": "NICE TO MEET YOU",
+    "category": "GREETING"
+  },
+  "7": {
+    "id": 7,
+    "raw_label": "THANK YOU",
+    "label": "THANK YOU",
+    "category": "GREETING"
+  },
+  "8": {
+    "id": 8,
+    "raw_label": "YOURE WELCOME",
+    "label": "YOU'RE WELCOME",
+    "category": "GREETING"
+  },
+  "9": {
+    "id": 9,
+    "raw_label": "SEE YOU TOMORROW",
+    "label": "SEE YOU TOMORROW",
+    "category": "GREETING"
+  },
+  "10": {
+    "id": 10,
+    "raw_label": "UNDERSTAND",
+    "label": "UNDERSTAND",
+    "category": "SURVIVAL"
+  },
+  "11": {
+    "id": 11,
+    "raw_label": "DON\u2019T UNDERSTAND",
+    "label": "DON'T UNDERSTAND",
+    "category": "SURVIVAL"
+  },
+  "12": {
+    "id": 12,
+    "raw_label": "KNOW",
+    "label": "KNOW",
+    "category": "SURVIVAL"
+  },
+  "13": {
+    "id": 13,
+    "raw_label": "DON\u2019T KNOW",
+    "label": "DON'T KNOW",
+    "category": "SURVIVAL"
+  },
+  "14": {
+    "id": 14,
+    "raw_label": "NO",
+    "label": "NO",
+    "category": "SURVIVAL"
+  },
+  "15": {
+    "id": 15,
+    "raw_label": "YES",
+    "label": "YES",
+    "category": "SURVIVAL"
+  },
+  "16": {
+    "id": 16,
+    "raw_label": "WRONG",
+    "label": "WRONG",
+    "category": "SURVIVAL"
+  },
+  "17": {
+    "id": 17,
+    "raw_label": "CORRECT",
+    "label": "CORRECT",
+    "category": "SURVIVAL"
+  },
+  "18": {
+    "id": 18,
+    "raw_label": "SLOW",
+    "label": "SLOW",
+    "category": "SURVIVAL"
+  },
+  "19": {
+    "id": 19,
+    "raw_label": "FAST",
+    "label": "FAST",
+    "category": "SURVIVAL"
+  },
+  "20": {
+    "id": 20,
+    "raw_label": "ONE",
+    "label": "ONE",
+    "category": "NUMBER"
+  },
+  "21": {
+    "id": 21,
+    "raw_label": "TWO",
+    "label": "TWO",
+    "category": "NUMBER"
+  },
+  "22": {
+    "id": 22,
+    "raw_label": "THREE",
+    "label": "THREE",
+    "category": "NUMBER"
+  },
+  "23": {
+    "id": 23,
+    "raw_label": "FOUR",
+    "label": "FOUR",
+    "category": "NUMBER"
+  },
+  "24": {
+    "id": 24,
+    "raw_label": "FIVE",
+    "label": "FIVE",
+    "category": "NUMBER"
+  },
+  "25": {
+    "id": 25,
+    "raw_label": "SIX",
+    "label": "SIX",
+    "category": "NUMBER"
+  },
+  "26": {
+    "id": 26,
+    "raw_label": "SEVEN",
+    "label": "SEVEN",
+    "category": "NUMBER"
+  },
+  "27": {
+    "id": 27,
+    "raw_label": "EIGHT",
+    "label": "EIGHT",
+    "category": "NUMBER"
+  },
+  "28": {
+    "id": 28,
+    "raw_label": "NINE ",
+    "label": "NINE",
+    "category": "NUMBER"
+  },
+  "29": {
+    "id": 29,
+    "raw_label": "TEN",
+    "label": "TEN",
+    "category": "NUMBER"
+  },
+  "30": {
+    "id": 30,
+    "raw_label": "JANUARY",
+    "label": "JANUARY",
+    "category": "CALENDAR"
+  },
+  "31": {
+    "id": 31,
+    "raw_label": "FEBRUARY",
+    "label": "FEBRUARY",
+    "category": "CALENDAR"
+  },
+  "32": {
+    "id": 32,
+    "raw_label": "MARCH",
+    "label": "MARCH",
+    "category": "CALENDAR"
+  },
+  "33": {
+    "id": 33,
+    "raw_label": "APRIL",
+    "label": "APRIL",
+    "category": "CALENDAR"
+  },
+  "34": {
+    "id": 34,
+    "raw_label": "MAY",
+    "label": "MAY",
+    "category": "CALENDAR"
+  },
+  "35": {
+    "id": 35,
+    "raw_label": "JUNE",
+    "label": "JUNE",
+    "category": "CALENDAR"
+  },
+  "36": {
+    "id": 36,
+    "raw_label": "JULY",
+    "label": "JULY",
+    "category": "CALENDAR"
+  },
+  "37": {
+    "id": 37,
+    "raw_label": "AUGUST",
+    "label": "AUGUST",
+    "category": "CALENDAR"
+  },
+  "38": {
+    "id": 38,
+    "raw_label": "SEPTEMBER",
+    "label": "SEPTEMBER",
+    "category": "CALENDAR"
+  },
+  "39": {
+    "id": 39,
+    "raw_label": "OCTOBER",
+    "label": "OCTOBER",
+    "category": "CALENDAR"
+  },
+  "40": {
+    "id": 40,
+    "raw_label": "NOVEMBER",
+    "label": "NOVEMBER",
+    "category": "CALENDAR"
+  },
+  "41": {
+    "id": 41,
+    "raw_label": "DECEMBER",
+    "label": "DECEMBER",
+    "category": "CALENDAR"
+  },
+  "42": {
+    "id": 42,
+    "raw_label": "MONDAY",
+    "label": "MONDAY",
+    "category": "DAYS"
+  },
+  "43": {
+    "id": 43,
+    "raw_label": "TUESDAY",
+    "label": "TUESDAY",
+    "category": "DAYS"
+  },
+  "44": {
+    "id": 44,
+    "raw_label": "WEDNESDAY",
+    "label": "WEDNESDAY",
+    "category": "DAYS"
+  },
+  "45": {
+    "id": 45,
+    "raw_label": "THURSDAY",
+    "label": "THURSDAY",
+    "category": "DAYS"
+  },
+  "46": {
+    "id": 46,
+    "raw_label": "FRIDAY",
+    "label": "FRIDAY",
+    "category": "DAYS"
+  },
+  "47": {
+    "id": 47,
+    "raw_label": "SATURDAY",
+    "label": "SATURDAY",
+    "category": "DAYS"
+  },
+  "48": {
+    "id": 48,
+    "raw_label": "SUNDAY",
+    "label": "SUNDAY",
+    "category": "DAYS"
+  },
+  "49": {
+    "id": 49,
+    "raw_label": "TODAY",
+    "label": "TODAY",
+    "category": "DAYS"
+  },
+  "50": {
+    "id": 50,
+    "raw_label": "TOMORROW",
+    "label": "TOMORROW",
+    "category": "DAYS"
+  },
+  "51": {
+    "id": 51,
+    "raw_label": "YESTERDAY",
+    "label": "YESTERDAY",
+    "category": "DAYS"
+  },
+  "52": {
+    "id": 52,
+    "raw_label": "FATHER",
+    "label": "FATHER",
+    "category": "FAMILY"
+  },
+  "53": {
+    "id": 53,
+    "raw_label": "MOTHER",
+    "label": "MOTHER",
+    "category": "FAMILY"
+  },
+  "54": {
+    "id": 54,
+    "raw_label": "SON",
+    "label": "SON",
+    "category": "FAMILY"
+  },
+  "55": {
+    "id": 55,
+    "raw_label": "DAUGHTER",
+    "label": "DAUGHTER",
+    "category": "FAMILY"
+  },
+  "56": {
+    "id": 56,
+    "raw_label": "GRANDFATHER",
+    "label": "GRANDFATHER",
+    "category": "FAMILY"
+  },
+  "57": {
+    "id": 57,
+    "raw_label": "GRANDMOTHER",
+    "label": "GRANDMOTHER",
+    "category": "FAMILY"
+  },
+  "58": {
+    "id": 58,
+    "raw_label": "UNCLE",
+    "label": "UNCLE",
+    "category": "FAMILY"
+  },
+  "59": {
+    "id": 59,
+    "raw_label": "AUNTIE",
+    "label": "AUNTIE",
+    "category": "FAMILY"
+  },
+  "60": {
+    "id": 60,
+    "raw_label": "COUSIN",
+    "label": "COUSIN",
+    "category": "FAMILY"
+  },
+  "61": {
+    "id": 61,
+    "raw_label": "PARENTS",
+    "label": "PARENTS",
+    "category": "FAMILY"
+  },
+  "62": {
+    "id": 62,
+    "raw_label": "BOY",
+    "label": "BOY",
+    "category": "RELATIONSHIPS"
+  },
+  "63": {
+    "id": 63,
+    "raw_label": "GIRL",
+    "label": "GIRL",
+    "category": "RELATIONSHIPS"
+  },
+  "64": {
+    "id": 64,
+    "raw_label": "MAN",
+    "label": "MAN",
+    "category": "RELATIONSHIPS"
+  },
+  "65": {
+    "id": 65,
+    "raw_label": "WOMAN",
+    "label": "WOMAN",
+    "category": "RELATIONSHIPS"
+  },
+  "66": {
+    "id": 66,
+    "raw_label": "DEAF",
+    "label": "DEAF",
+    "category": "RELATIONSHIPS"
+  },
+  "67": {
+    "id": 67,
+    "raw_label": "HARD OF HEARING",
+    "label": "HARD OF HEARING",
+    "category": "RELATIONSHIPS"
+  },
+  "68": {
+    "id": 68,
+    "raw_label": "WEELCHAIR PERSON",
+    "label": "WHEELCHAIR PERSON",
+    "category": "RELATIONSHIPS"
+  },
+  "69": {
+    "id": 69,
+    "raw_label": "BLIND",
+    "label": "BLIND",
+    "category": "RELATIONSHIPS"
+  },
+  "70": {
+    "id": 70,
+    "raw_label": "DEAF BLIND",
+    "label": "DEAF BLIND",
+    "category": "RELATIONSHIPS"
+  },
+  "71": {
+    "id": 71,
+    "raw_label": "MARRIED",
+    "label": "MARRIED",
+    "category": "RELATIONSHIPS"
+  },
+  "72": {
+    "id": 72,
+    "raw_label": "BLUE",
+    "label": "BLUE",
+    "category": "COLOR"
+  },
+  "73": {
+    "id": 73,
+    "raw_label": "GREEN",
+    "label": "GREEN",
+    "category": "COLOR"
+  },
+  "74": {
+    "id": 74,
+    "raw_label": "RED",
+    "label": "RED",
+    "category": "COLOR"
+  },
+  "75": {
+    "id": 75,
+    "raw_label": "BROWN",
+    "label": "BROWN",
+    "category": "COLOR"
+  },
+  "76": {
+    "id": 76,
+    "raw_label": "BLACK",
+    "label": "BLACK",
+    "category": "COLOR"
+  },
+  "77": {
+    "id": 77,
+    "raw_label": "WHITE",
+    "label": "WHITE",
+    "category": "COLOR"
+  },
+  "78": {
+    "id": 78,
+    "raw_label": "YELLOW",
+    "label": "YELLOW",
+    "category": "COLOR"
+  },
+  "79": {
+    "id": 79,
+    "raw_label": "ORANGE",
+    "label": "ORANGE",
+    "category": "COLOR"
+  },
+  "80": {
+    "id": 80,
+    "raw_label": "GRAY",
+    "label": "GRAY",
+    "category": "COLOR"
+  },
+  "81": {
+    "id": 81,
+    "raw_label": "PINK",
+    "label": "PINK",
+    "category": "COLOR"
+  },
+  "82": {
+    "id": 82,
+    "raw_label": "VIOLET",
+    "label": "VIOLET",
+    "category": "COLOR"
+  },
+  "83": {
+    "id": 83,
+    "raw_label": "LIGHT",
+    "label": "LIGHT",
+    "category": "COLOR"
+  },
+  "84": {
+    "id": 84,
+    "raw_label": "DARK",
+    "label": "DARK",
+    "category": "COLOR"
+  },
+  "85": {
+    "id": 85,
+    "raw_label": "BREAD",
+    "label": "BREAD",
+    "category": "FOOD"
+  },
+  "86": {
+    "id": 86,
+    "raw_label": "EGG",
+    "label": "EGG",
+    "category": "FOOD"
+  },
+  "87": {
+    "id": 87,
+    "raw_label": "FISH",
+    "label": "FISH",
+    "category": "FOOD"
+  },
+  "88": {
+    "id": 88,
+    "raw_label": "MEAT",
+    "label": "MEAT",
+    "category": "FOOD"
+  },
+  "89": {
+    "id": 89,
+    "raw_label": "CHICKEN",
+    "label": "CHICKEN",
+    "category": "FOOD"
+  },
+  "90": {
+    "id": 90,
+    "raw_label": "SPAGHETTI",
+    "label": "SPAGHETTI",
+    "category": "FOOD"
+  },
+  "91": {
+    "id": 91,
+    "raw_label": "RICE",
+    "label": "RICE",
+    "category": "FOOD"
+  },
+  "92": {
+    "id": 92,
+    "raw_label": "LONGANISA",
+    "label": "LONGANISA",
+    "category": "FOOD"
+  },
+  "93": {
+    "id": 93,
+    "raw_label": "SHRIMP",
+    "label": "SHRIMP",
+    "category": "FOOD"
+  },
+  "94": {
+    "id": 94,
+    "raw_label": "CRAB",
+    "label": "CRAB",
+    "category": "FOOD"
+  },
+  "95": {
+    "id": 95,
+    "raw_label": "HOT",
+    "label": "HOT",
+    "category": "DRINK"
+  },
+  "96": {
+    "id": 96,
+    "raw_label": "COLD",
+    "label": "COLD",
+    "category": "DRINK"
+  },
+  "97": {
+    "id": 97,
+    "raw_label": "JUICE",
+    "label": "JUICE",
+    "category": "DRINK"
+  },
+  "98": {
+    "id": 98,
+    "raw_label": "MILK",
+    "label": "MILK",
+    "category": "DRINK"
+  },
+  "99": {
+    "id": 99,
+    "raw_label": "COFFEE",
+    "label": "COFFEE",
+    "category": "DRINK"
+  },
+  "100": {
+    "id": 100,
+    "raw_label": "TEA",
+    "label": "TEA",
+    "category": "DRINK"
+  },
+  "101": {
+    "id": 101,
+    "raw_label": "BEER",
+    "label": "BEER",
+    "category": "DRINK"
+  },
+  "102": {
+    "id": 102,
+    "raw_label": "WINE",
+    "label": "WINE",
+    "category": "DRINK"
+  },
+  "103": {
+    "id": 103,
+    "raw_label": "SUGAR",
+    "label": "SUGAR",
+    "category": "DRINK"
+  },
+  "104": {
+    "id": 104,
+    "raw_label": "NO SUGAR",
+    "label": "NO SUGAR",
+    "category": "DRINK"
+  }
+}

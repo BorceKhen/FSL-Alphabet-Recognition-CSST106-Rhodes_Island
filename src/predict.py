@@ -12,7 +12,7 @@ if __name__ == "__main__" and __package__ is None:
 
 import cv2
 
-from src.app import ModelPredictor
+from src.predictor import ModelPredictor
 from src.features import HandLandmarkExtractor, apply_clahe, draw_hand_skeleton
 
 

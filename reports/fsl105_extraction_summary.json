@@ -1,0 +1,14 @@
+{
+  "dataset_dir": "D:\\projects\\FSL-Alphabet-Recognition-CSST106-Rhodes_Island\\data\\FSL-105 A dataset for recognizing 105 Filipino sign language videos",
+  "num_classes": 105,
+  "seq_len": 40,
+  "feature_dim": 293,
+  "train_clips": 1704,
+  "test_clips": 426,
+  "train_zero_hand_clips": 1,
+  "test_zero_hand_clips": 0,
+  "train_median_active_frames": 15,
+  "test_median_active_frames": 15,
+  "thumbnails_saved": 105,
+  "elapsed_seconds": 2025.09
+}

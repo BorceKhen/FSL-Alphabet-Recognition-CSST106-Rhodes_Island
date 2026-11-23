@@ -1,33 +1,27 @@
-# Filipino Sign Language (FSL) Alphabet Recognition & Word Formation System
+# KUMPAS: Two-Way Filipino Sign Language (FSL) Communication System
 
-A real-time computer vision system that recognizes Filipino Sign Language (`A`–`Z`) fingerspelling gestures from a webcam or uploaded images and assembles confirmed letters into readable text for communication between FSL users and non-signing individuals. Using MediaPipe `HandLandmarker` to extract wrist-relative, scale-normalized 63-dimensional hand coordinates, the system classifies gestures with a landmark-augmented PyTorch Deep MLP (`98.52%` test accuracy, `0.287 ms` CPU latency, `246.0 KB`) compared against an RBF-SVM baseline (`98.23%`), and applies confidence thresholding (`τ = 0.75`), 10-frame majority voting, and `1.0 s` dwell-time confirmation in a live Flask Web UI, PyQt6 desktop app, and unified CLI pipeline.
+A real-time computer vision communication bridge designed to enable direct, effortless two-way interaction between Deaf/hard-of-hearing FSL signers and non-signing hearing individuals.
 
-![FSL Web UI Dashboard](outputs/final/ui_dashboard.png)
-
-> **Final Outputs & Charts**: See [`outputs/final/`](./outputs/final) for the live UI captures, confusion matrices, training curves, failure gallery, and reproduced results table.
-
----
-
-## Requirements
-
-- Python `3.10+` (tested on Python `3.12.5`)
-- Webcam (for live recognition; static image upload and CLI batch modes work without a camera)
-- Packages listed in [`requirements.txt`](./requirements.txt):
-  - `Flask`, `mediapipe`, `opencv-python`, `numpy`, `pandas`, `scikit-learn`, `torch`, `PyQt6`, `matplotlib`, `seaborn`, `joblib`
+Upgraded from the baseline A–Z fingerspelling prototype, **KUMPAS** now combines:
+1. **Dynamic FSL-105 Word & Phrase Recognition (`FSLPhraseNet`)**: Recognizes **105 everyday Filipino Sign Language words & phrases** across 10 practical communication categories (*Greetings, Survival, Numbers, Calendar, Days, Family, Relationships, Colors, Food, Drinks*) from upper-body pose and two-hand MediaPipe Holistic sequences (`97.89%` Top-1 / `99.77%` Top-3 held-out test accuracy, `7.235 ms` CPU latency).
+2. **A–Z Fingerspelling + Bilingual Predictive Autocomplete**: Preserves the proposal's 26-letter MediaPipe `HandLandmarker` + PyTorch Deep MLP pipeline (`98.52%` test accuracy, `0.160–0.287 ms` CPU latency) with `τ = 0.75`, 10-frame majority voting, `1.0 s` dwell-time confirmation, `2.0 s` auto-space, and instant English/Filipino word completion chips for names, places, and healthcare/pharmacy terms.
+3. **Natural EN/FIL Sentence Composition & Auto-Speak TTS**: Converts signed glosses and fingerspelled words into natural English or Filipino (Tagalog) sentences and speaks them aloud automatically.
+4. **Two-Way Hearing Listener Bridge & Fullscreen Display Card**: Hearing listeners can reply via **Voice-to-Text microphone** (Web Speech API) or quick-reply/text input, with automatic FSL-105 sign lookup pills attached to replies for the Deaf user, plus a high-contrast fullscreen listener card for noisy or counter environments.
+5. **Proposal-Aligned Low-Light Resilience & On-Demand Sign Guide**: Automatic CLAHE contrast fallback activates whenever standard tracking misses a hand, while the A–Z and 105-phrase visual references live inside a searchable **Sign Guide** modal rather than cluttering the communication workspace.
 
 ---
 
-## Installation
+## Requirements & Setup
 
-```bash
+- Python `3.10+` (verified on Python `3.12.3`)
+- Webcam (for live signing; uploaded video/image files and the built-in held-out **Test Clip** picker work without a camera)
+- Packages in [`requirements.txt`](./requirements.txt) (note: `mediapipe==0.10.21` requires `protobuf>=4.25.3,<5`)
+
+```powershell
 git clone https://github.com/BorceKhen/FSL-Alphabet-Recognition-CSST106-Rhodes_Island.git
 cd FSL-Alphabet-Recognition-CSST106-Rhodes_Island
-python -m venv .venv
-# Windows PowerShell:
+python -m venv --system-site-packages .venv
 .venv\Scripts\Activate.ps1
-# macOS / Linux:
-# source .venv/bin/activate
-
 pip install -r requirements.txt
 ```
 
@@ -35,58 +29,60 @@ pip install -r requirements.txt
 
 ## How to Run the Application
 
-### Option 1: Web UI (Recommended — Live Webcam & Image Upload)
-```bash
-python -m src.web_app
+### Option 1: Web Communication UI (Recommended)
+```powershell
+.venv\Scripts\python.exe -m src.web_app
 ```
-Open **http://127.0.0.1:5000** in your browser, click **Start Camera** (or **Upload Image** to evaluate static test images), and hold a steady sign for `1.0 s` to transcribe text. *(On Windows, you can also double-click `run_app.bat`.)*
+Open **http://127.0.0.1:5000** in your browser (or double-click `run_app.bat` on Windows).
+- **Phrase Mode (`105 Signs`)**: Start the camera (or click **Test Clip** / **Upload**) to sign everyday FSL phrases, compose natural EN/FIL sentences, speak aloud, and exchange two-way replies.
+- **Fingerspell Mode (`A–Z`)**: Hold a steady alphabet sign for `1.0 s` and tap predictive autocomplete chips to spell names or custom words rapidly.
 
-### Option 2: Unified Single-Command CLI Pipeline (`src/run.py`)
-```bash
-python src/run.py --input path/to/images_or_image.jpg --output outputs/run_test/
-python src/run.py --input path/to/video.mp4 --output outputs/demo_annotated.mp4
-python src/run.py --webcam 0
+### Option 2: Unified CLI Pipeline (`src/run.py`)
+```powershell
+# Dynamic FSL-105 phrase recognition on video or webcam
+.venv\Scripts\python.exe src/run.py --mode phrase --input "data\FSL-105 A dataset for recognizing 105 Filipino sign language videos\clips\0\17.MOV" --output outputs/demo_phrase.mp4
+.venv\Scripts\python.exe src/run.py --mode phrase --webcam 0
+
+# A-Z fingerspelling on image, folder, video, or webcam
+.venv\Scripts\python.exe src/run.py --mode alphabet --input path/to/images_or_image.jpg --output outputs/run_test/
+.venv\Scripts\python.exe src/run.py --mode alphabet --webcam 0
 ```
 
-### Option 3: PyQt6 Desktop UI
-```bash
+### Option 3: PyQt6 Desktop UI (A–Z)
+```powershell
 python -m src.app
 ```
 
-### Run Unit Tests
-```bash
-python -m unittest discover -s tests -v
+### Run Unit & Integration Tests
+```powershell
+.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
 ---
 
-## How to Reproduce the Results Table
+## Reproduced Evaluation Results
 
-Run the evaluation script on the held-out 15% test split (`1,753` samples) with one command:
-
-```bash
-python -m src.evaluate --split test --weights models/mlp_model.pt
+### 1. FSL-105 Dynamic Phrase & Word Recognition (`426` held-out `test.csv` clips, `105` classes)
+Reproduce with:
+```powershell
+.venv\Scripts\python.exe -m src.evaluate_fsl105
 ```
 
-This prints the comparison table (after CPU warm-up) and writes metrics and confusion matrices to [`reports/`](./reports).
-
-| Model | Accuracy | Macro Precision | Macro Recall | Macro F1 | CPU Latency (Warm-Up) | Model Size |
+| Model | Top-1 Accuracy | Top-3 Accuracy | Top-5 Accuracy | Macro F1 | CPU Latency | Model Size |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Baseline RBF-SVM** (`C=50.0, gamma=0.05`) | 98.23% | 98.27% | 98.23% | 98.23% | 1.040 ms | 2,183.8 KB |
-| **Deep MLP (Main, Augmented)** (`256-128-64`) | **98.52%** | **98.53%** | **98.52%** | **0.9852** | **0.287 ms** | **246.0 KB** |
+| **Baseline Temporal-Summary RBF-SVM** (`PCA-256, C=20.0`) | 92.96% | 97.42% | 97.89% | 0.9291 | **1.479 ms** | **7,029.4 KB** |
+| **FSLPhraseNet (Main: Conv1D + BiGRU + Attn-Max)** | **97.89%** | **99.77%** | **99.77%** | **0.9789** | 7.235 ms | 7,276.4 KB |
 
----
+### 2. FSL Alphabet A–Z Fingerspelling (`1,753` held-out test samples, `26` classes)
+Reproduce with:
+```powershell
+.venv\Scripts\python.exe -m src.evaluate --split test --weights models/mlp_model.pt
+```
 
-## Dataset & Model Weights
-
-- **Raw Image Dataset**: [Kaggle FSL Dataset](https://www.kaggle.com/datasets/japorton/fsl-dataset) (`11,700` RGB images, `26` classes `A`–`Z`, `450` images/class, CC0 Public Domain).
-  - Configured path in [`src/config.py`](./src/config.py): `FSL Dataset/Collated` (only needed if re-running `python -m src.prepare_dataset`).
-- **Pre-Extracted Landmark Splits**: [`data/fsl_landmarks.npz`](./data/fsl_landmarks.npz) (`11,683` detected samples: `8,178` train / `1,752` val / `1,753` test) — documented in [`data/README.md`](./data/README.md).
-- **Trained Weights (`models/`)**:
-  - [`models/mlp_model.pt`](./models/mlp_model.pt) (`246.0 KB`) & [`models/mlp_scaler.joblib`](./models/mlp_scaler.joblib) — Main Deep MLP classifier
-  - [`models/svm_baseline.joblib`](./models/svm_baseline.joblib) (`2,183.8 KB`) — Baseline RBF-SVM pipeline
-  - [`models/hand_landmarker.task`](./models/hand_landmarker.task) — MediaPipe 21-keypoint hand landmarker
-  - [`models/label_map.json`](./models/label_map.json) — Class index mapping (`0–25` → `A–Z`)
+| Model | Accuracy | Macro Precision | Macro Recall | Macro F1 | CPU Latency | Model Size |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Baseline RBF-SVM** (`C=50.0, gamma=0.05`) | 98.23% | 98.27% | 98.23% | 0.9823 | 0.466 ms | 2,183.8 KB |
+| **Deep MLP (Main, Augmented)** (`256-128-64`) | **98.52%** | **98.53%** | **98.52%** | **0.9852** | **0.160 ms** | **246.0 KB** |
 
 ---
 
@@ -97,28 +93,31 @@ FSL/
 ├── README.md
 ├── requirements.txt
 ├── run_app.bat
-├── docs/
-│   └── remaining.md          # To-100% milestone checklist
 ├── src/
-│   ├── config.py             # Paths, constants, thresholds (τ=0.75, 10 frames, 1.0s dwell)
-│   ├── features.py           # MediaPipe HandLandmarker + 63-dim normalization + CLAHE
-│   ├── prepare_dataset.py    # Batch landmark extraction & stratified 70/15/15 split
-│   ├── train_baseline.py     # Baseline RBF-SVM training & validation tuning
-│   ├── train_mlp.py          # PyTorch Deep MLP training with ±15° landmark augmentation
-│   ├── evaluate.py           # Test-set metrics, confusion matrices, CPU latency benchmark
-│   ├── postprocess.py        # Confidence filter, 10-frame majority vote, 1.0s dwell buffer
-│   ├── run.py                # Unified CLI pipeline (images, folders, video, webcam)
-│   ├── app.py                # PyQt6 + OpenCV desktop GUI & shared ModelPredictor
-│   ├── web_app.py            # Flask Web UI backend
-│   ├── templates/index.html  # Web dashboard HTML
-│   └── static/               # Web dashboard CSS & JS
+│   ├── config.py             # Paths, A-Z & FSL-105 hyperparameters and thresholds
+│   ├── features.py           # HandLandmarker (63-dim), Holistic (293-dim), auto-CLAHE fallback
+│   ├── prepare_dataset.py    # A-Z Kaggle landmark extraction & stratified splits
+│   ├── prepare_fsl105.py     # FSL-105 Holistic sequence & thumbnail extraction
+│   ├── train_baseline.py     # A-Z Baseline RBF-SVM training
+│   ├── train_mlp.py          # A-Z PyTorch Deep MLP training
+│   ├── train_fsl105.py       # FSL-105 Baseline RBF-SVM & FSLPhraseNet training
+│   ├── evaluate.py           # A-Z test-set metrics & confusion matrices
+│   ├── evaluate_fsl105.py    # FSL-105 test-set metrics & category charts
+│   ├── predictor.py          # Shared A-Z ModelPredictor
+│   ├── phrase_predictor.py   # FSL-105 PhrasePredictor
+│   ├── translator.py         # 105-sign EN/FIL sentence composer, autocomplete & listener matcher
+│   ├── postprocess.py        # WordFormationProcessor & PhraseSignProcessor
+│   ├── run.py                # Unified CLI (--mode phrase | alphabet)
+│   ├── app.py                # PyQt6 desktop GUI
+│   ├── web_app.py            # Flask Two-Way Communication backend
+│   ├── templates/index.html  # Two-way KUMPAS web interface
+│   └── static/               # CSS & JS client logic
 ├── tests/
-│   └── test_pipeline.py      # Unit tests for normalization, post-processing, and MLP
-├── data/                     # Cached 63-dim landmark splits (fsl_landmarks.npz) & Data Card
-├── models/                   # Saved weights, scalers, and MediaPipe task model
-├── reports/                  # Raw JSON metrics, curves, confusion matrices, test error log
-└── outputs/
-    └── final/                # Milestone 5 final deliverables (screenshots, charts, tables)
+│   └── test_pipeline.py      # Unit & Web API integration tests
+├── data/                     # Cached landmarks (fsl_landmarks.npz, fsl105_landmarks.npz) & thumbnails
+├── models/                   # Saved PyTorch/joblib weights, scalers, label maps
+├── reports/                  # Raw JSON metrics, curves, confusion matrices, error logs
+└── outputs/final/            # Final deliverables, charts, and summary tables
 ```
 
 ---
@@ -126,11 +125,3 @@ FSL/
 ## Team & Contributions
 
 **Team Members**: John Benedict M. Hornilla, Johann Francois P. Tanyag, Ron Ken S. Borce
-
-| Module / Area | Scope | Member(s) / Role |
-| :--- | :--- | :--- |
-| Data & Preprocessing Pipeline | Dataset structuring, MediaPipe 21-keypoint extraction, 63-dim normalization | John Benedict M. Hornilla, Johann Francois P. Tanyag, Ron Ken S. Borce (Lead ML / Data) |
-| Model Development & Training | Baseline RBF-SVM & augmented Deep MLP training and hyperparameter tuning | Ron Ken S. Borce, John Benedict M. Hornilla (ML / CV Specialist) |
-| Post-Processing & Logic | Confidence thresholding (`0.75`), 10-frame smoothing, `1.0 s` dwell-time buffer | Johann Francois P. Tanyag, Ron Ken S. Borce (Backend Developer) |
-| Real-Time UI & Integration | Flask Web UI (`src/web_app.py`), CLI (`src/run.py`) & PyQt6 UI (`src/app.py`) | Ron Ken S. Borce, John Benedict M. Hornilla, Johann Francois P. Tanyag (Full-Stack / UI) |
-| Evaluation & Documentation | Benchmark testing, confusion matrices, final report & defense slides | All Members (Systems & Technical Writing) |

@@ -8,3 +8,4 @@ venv/
 *.log
 .DS_Store
 Thumbs.db
+data/FSL-105 A dataset for recognizing 105 Filipino sign language videos/

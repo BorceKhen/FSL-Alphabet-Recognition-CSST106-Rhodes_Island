@@ -31,6 +31,34 @@ CLASSES = [chr(ord("A") + i) for i in range(26)]
 NUM_CLASSES = len(CLASSES)
 FEATURE_DIM = 63  # 21 hand landmarks * (x, y, z)
 
+# FSL-105 Dynamic Phrase Dataset & Model Configuration
+_env_fsl105_dir = os.environ.get("FSL105_DATASET_DIR")
+_fsl105_candidates = (
+    Path(_env_fsl105_dir).expanduser() if _env_fsl105_dir else None,
+    DATA_DIR / "FSL-105 A dataset for recognizing 105 Filipino sign language videos",
+    PROJECT_ROOT / "FSL-105 A dataset for recognizing 105 Filipino sign language videos",
+)
+FSL105_DIR = next(
+    (path for path in _fsl105_candidates if path is not None and path.is_dir()),
+    DATA_DIR / "FSL-105 A dataset for recognizing 105 Filipino sign language videos",
+)
+FSL105_LANDMARKS_PATH = DATA_DIR / "fsl105_landmarks.npz"
+FSL105_THUMBS_DIR = DATA_DIR / "fsl105_thumbs"
+FSL105_LABEL_MAP_PATH = MODELS_DIR / "fsl105_label_map.json"
+FSL105_MODEL_PATH = MODELS_DIR / "fsl105_model.pt"
+FSL105_SCALER_PATH = MODELS_DIR / "fsl105_scaler.joblib"
+FSL105_SVM_PATH = MODELS_DIR / "fsl105_svm_baseline.joblib"
+
+FSL105_NUM_CLASSES = 105
+FSL105_SEQ_LEN = 40
+FSL105_FEATURE_DIM = 293  # 15*3 pose + 21*3 lh_body + 21*3 rh_body + 20*3 lh_local + 20*3 rh_local + 2 flags
+
+PHRASE_CONFIDENCE_THRESHOLD = 0.55
+PHRASE_MIN_ACTIVE_FRAMES = 8
+PHRASE_MAX_BUFFER_FRAMES = 48
+PHRASE_IDLE_END_SECONDS = 0.55
+PHRASE_COOLDOWN_SECONDS = 1.4
+
 # Dataset split ratios (stratified)
 TRAIN_RATIO = 0.70
 VAL_RATIO = 0.15
