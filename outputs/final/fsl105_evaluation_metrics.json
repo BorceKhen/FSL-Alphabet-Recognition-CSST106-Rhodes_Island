@@ -1,0 +1,130 @@
+{
+  "split": "test",
+  "test_samples": 426,
+  "num_classes": 105,
+  "machine": "Windows (Intel64 Family 6 Model 141 Stepping 1, GenuineIntel)",
+  "svm_baseline": {
+    "top1_accuracy": 0.9296,
+    "top3_accuracy": 0.9742,
+    "top5_accuracy": 0.9789,
+    "macro_precision": 0.946,
+    "macro_recall": 0.9305,
+    "macro_f1": 0.9291,
+    "per_category": {
+      "GREETING": {
+        "samples": 42,
+        "top1_accuracy": 0.881,
+        "top3_accuracy": 0.9762
+      },
+      "SURVIVAL": {
+        "samples": 41,
+        "top1_accuracy": 0.9024,
+        "top3_accuracy": 1.0
+      },
+      "NUMBER": {
+        "samples": 40,
+        "top1_accuracy": 0.825,
+        "top3_accuracy": 0.95
+      },
+      "CALENDAR": {
+        "samples": 51,
+        "top1_accuracy": 0.8627,
+        "top3_accuracy": 0.902
+      },
+      "DAYS": {
+        "samples": 40,
+        "top1_accuracy": 1.0,
+        "top3_accuracy": 1.0
+      },
+      "FAMILY": {
+        "samples": 40,
+        "top1_accuracy": 0.925,
+        "top3_accuracy": 1.0
+      },
+      "RELATIONSHIPS": {
+        "samples": 40,
+        "top1_accuracy": 0.95,
+        "top3_accuracy": 0.95
+      },
+      "COLOR": {
+        "samples": 52,
+        "top1_accuracy": 0.9808,
+        "top3_accuracy": 1.0
+      },
+      "FOOD": {
+        "samples": 40,
+        "top1_accuracy": 0.975,
+        "top3_accuracy": 0.975
+      },
+      "DRINK": {
+        "samples": 40,
+        "top1_accuracy": 1.0,
+        "top3_accuracy": 1.0
+      }
+    },
+    "cpu_latency_ms": 0.917,
+    "model_size_kb": 7029.4
+  },
+  "fsl_phrasenet": {
+    "top1_accuracy": 0.9789,
+    "top3_accuracy": 0.9977,
+    "top5_accuracy": 0.9977,
+    "macro_precision": 0.9816,
+    "macro_recall": 0.979,
+    "macro_f1": 0.9789,
+    "per_category": {
+      "GREETING": {
+        "samples": 42,
+        "top1_accuracy": 0.9762,
+        "top3_accuracy": 0.9762
+      },
+      "SURVIVAL": {
+        "samples": 41,
+        "top1_accuracy": 0.9756,
+        "top3_accuracy": 1.0
+      },
+      "NUMBER": {
+        "samples": 40,
+        "top1_accuracy": 0.925,
+        "top3_accuracy": 1.0
+      },
+      "CALENDAR": {
+        "samples": 51,
+        "top1_accuracy": 0.9608,
+        "top3_accuracy": 1.0
+      },
+      "DAYS": {
+        "samples": 40,
+        "top1_accuracy": 1.0,
+        "top3_accuracy": 1.0
+      },
+      "FAMILY": {
+        "samples": 40,
+        "top1_accuracy": 0.95,
+        "top3_accuracy": 1.0
+      },
+      "RELATIONSHIPS": {
+        "samples": 40,
+        "top1_accuracy": 1.0,
+        "top3_accuracy": 1.0
+      },
+      "COLOR": {
+        "samples": 52,
+        "top1_accuracy": 1.0,
+        "top3_accuracy": 1.0
+      },
+      "FOOD": {
+        "samples": 40,
+        "top1_accuracy": 1.0,
+        "top3_accuracy": 1.0
+      },
+      "DRINK": {
+        "samples": 40,
+        "top1_accuracy": 1.0,
+        "top3_accuracy": 1.0
+      }
+    },
+    "cpu_latency_ms": 6.439,
+    "model_size_kb": 7276.4
+  }
+}

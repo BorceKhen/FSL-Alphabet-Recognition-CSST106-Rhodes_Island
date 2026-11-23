@@ -12,7 +12,10 @@ from typing import Dict
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
+try:
+    import seaborn as sns
+except ImportError:
+    sns = None
 import torch
 from sklearn.metrics import (
     accuracy_score,
@@ -28,16 +31,32 @@ from src.train_mlp import FSLDeepMLP
 def _save_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, title: str, out_path) -> None:
     cm = confusion_matrix(y_true, y_pred)
     fig, ax = plt.subplots(figsize=(13, 11))
-    sns.heatmap(
-        cm,
-        annot=True,
-        fmt="d",
-        cmap="Blues",
-        xticklabels=CLASSES,
-        yticklabels=CLASSES,
-        cbar=False,
-        ax=ax,
-    )
+    if sns is not None:
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            xticklabels=CLASSES,
+            yticklabels=CLASSES,
+            cbar=False,
+            ax=ax,
+        )
+    else:
+        ax.imshow(cm, cmap="Blues", aspect="auto")
+        ax.set_xticks(range(len(CLASSES)))
+        ax.set_yticks(range(len(CLASSES)))
+        ax.set_xticklabels(CLASSES)
+        ax.set_yticklabels(CLASSES)
+        thresh = cm.max() / 2.0 if cm.size else 0.0
+        for r in range(cm.shape[0]):
+            for c in range(cm.shape[1]):
+                ax.text(
+                    c, r, str(cm[r, c]),
+                    ha="center", va="center",
+                    color="white" if cm[r, c] > thresh else "black",
+                    fontsize=7,
+                )
     ax.set_title(title, fontsize=14)
     ax.set_xlabel("Predicted Label")
     ax.set_ylabel("True Label")

@@ -1,0 +1,74 @@
+[
+  {
+    "test_index": 125,
+    "vid_path": "clips\\8\\19.MOV",
+    "true_label": "YOU'RE WELCOME",
+    "pred_label": "NICE TO MEET YOU",
+    "pred_confidence": 0.2123,
+    "true_confidence": 0.0049
+  },
+  {
+    "test_index": 228,
+    "vid_path": "clips\\61\\9.MOV",
+    "true_label": "PARENTS",
+    "pred_label": "UNCLE",
+    "pred_confidence": 0.8492,
+    "true_confidence": 0.0651
+  },
+  {
+    "test_index": 308,
+    "vid_path": "clips\\24\\5.MOV",
+    "true_label": "FIVE",
+    "pred_label": "SEVEN",
+    "pred_confidence": 0.7636,
+    "true_confidence": 0.0736
+  },
+  {
+    "test_index": 364,
+    "vid_path": "clips\\19\\5.MOV",
+    "true_label": "FAST",
+    "pred_label": "DEAF",
+    "pred_confidence": 0.27,
+    "true_confidence": 0.1694
+  },
+  {
+    "test_index": 369,
+    "vid_path": "clips\\37\\18.MOV",
+    "true_label": "AUGUST",
+    "pred_label": "APRIL",
+    "pred_confidence": 0.4199,
+    "true_confidence": 0.3654
+  },
+  {
+    "test_index": 389,
+    "vid_path": "clips\\26\\7.MOV",
+    "true_label": "SEVEN",
+    "pred_label": "FOUR",
+    "pred_confidence": 0.8273,
+    "true_confidence": 0.0645
+  },
+  {
+    "test_index": 394,
+    "vid_path": "clips\\38\\7.MOV",
+    "true_label": "SEPTEMBER",
+    "pred_label": "AUGUST",
+    "pred_confidence": 0.3267,
+    "true_confidence": 0.0715
+  },
+  {
+    "test_index": 403,
+    "vid_path": "clips\\26\\8.MOV",
+    "true_label": "SEVEN",
+    "pred_label": "FOUR",
+    "pred_confidence": 0.7597,
+    "true_confidence": 0.0964
+  },
+  {
+    "test_index": 420,
+    "vid_path": "clips\\58\\7.MOV",
+    "true_label": "UNCLE",
+    "pred_label": "PARENTS",
+    "pred_confidence": 0.845,
+    "true_confidence": 0.0705
+  }
+]
