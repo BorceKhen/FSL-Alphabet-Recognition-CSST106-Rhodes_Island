@@ -6,12 +6,6 @@
   const placeholder = document.getElementById("cameraPlaceholder");
   const toggleCamBtn = document.getElementById("toggleCamBtn");
   const captureNowBtn = document.getElementById("captureNowBtn");
-  const uploadBtn = document.getElementById("uploadBtn");
-  const mediaUploadInput = document.getElementById("mediaUploadInput");
-  const testClipBtn = document.getElementById("testClipBtn");
-  const testClipPopover = document.getElementById("testClipPopover");
-  const closeTestClipBtn = document.getElementById("closeTestClipBtn");
-  const testClipList = document.getElementById("testClipList");
 
   const modePhraseBtn = document.getElementById("modePhraseBtn");
   const modeSpellBtn = document.getElementById("modeSpellBtn");
@@ -57,13 +51,6 @@
   const spaceBtn = document.getElementById("spaceBtn");
   const undoBtn = document.getElementById("undoBtn");
   const clearComposerBtn = document.getElementById("clearComposerBtn");
-
-  const chatLog = document.getElementById("chatLog");
-  const exportChatBtn = document.getElementById("exportChatBtn");
-  const resetChatBtn = document.getElementById("resetChatBtn");
-  const listenerReplyForm = document.getElementById("listenerReplyForm");
-  const listenerInput = document.getElementById("listenerInput");
-  const micReplyBtn = document.getElementById("micReplyBtn");
 
   const signGuideModal = document.getElementById("signGuideModal");
   const signGuideBackdrop = document.getElementById("signGuideBackdrop");
@@ -126,7 +113,6 @@
   const ALPHABET_INTERVAL_MS = 70; // ~14 FPS
 
   let latestComposer = { tokens: [], text_buffer: "", formatted_en: "", formatted_fil: "" };
-  let latestConversation = [];
   let catalogData = { signs: [], categories: [], test_samples: [] };
 
   function speakText(text) {
@@ -324,66 +310,6 @@
     });
   }
 
-  function renderConversation(conv) {
-    latestConversation = conv || [];
-    chatLog.innerHTML = "";
-    if (latestConversation.length === 0) {
-      chatLog.innerHTML = '<div class="chat-empty">Signed messages appear here and speak aloud. The hearing person can speak or type replies below.</div>';
-      return;
-    }
-
-    latestConversation.forEach((msg) => {
-      const bubble = document.createElement("div");
-      bubble.className = `chat-bubble ${msg.sender === "signer" ? "chat-bubble-signer" : "chat-bubble-listener"}`;
-
-      const meta = document.createElement("div");
-      meta.className = "chat-meta";
-      meta.innerHTML = `<strong>${msg.sender === "signer" ? "FSL Signer" : "Hearing Listener"}</strong><span>${msg.timestamp || ""}</span>`;
-      bubble.appendChild(meta);
-
-      const txtEl = document.createElement("div");
-      txtEl.className = "chat-main-text";
-      const displayText = msg.sender === "signer"
-        ? (activeLang === "fil" ? msg.text_fil : msg.text_en)
-        : msg.text;
-      txtEl.textContent = displayText;
-      bubble.appendChild(txtEl);
-
-      const actions = document.createElement("div");
-      actions.className = "chat-bubble-actions";
-
-      if (msg.sender === "signer") {
-        const spk = document.createElement("button");
-        spk.type = "button";
-        spk.className = "chat-chip-btn";
-        spk.textContent = "Speak";
-        spk.addEventListener("click", () => speakText(displayText));
-        actions.appendChild(spk);
-
-        const cardBtn = document.createElement("button");
-        cardBtn.type = "button";
-        cardBtn.className = "chat-chip-btn";
-        cardBtn.textContent = "Show Card";
-        cardBtn.addEventListener("click", () => openLargeCard(displayText, msg.tokens?.map((t) => t.label).join(" + ") || ""));
-        actions.appendChild(cardBtn);
-      } else if (msg.matched_signs && msg.matched_signs.length > 0) {
-        msg.matched_signs.forEach((sign) => {
-          const pill = document.createElement("button");
-          pill.type = "button";
-          pill.className = "chat-chip-btn";
-          pill.textContent = `Sign: ${sign.label}`;
-          pill.title = "View FSL sign animation";
-          pill.addEventListener("click", () => openSignGuideAt(sign.id));
-          actions.appendChild(pill);
-        });
-      }
-
-      if (actions.children.length > 0) bubble.appendChild(actions);
-      chatLog.appendChild(bubble);
-    });
-    chatLog.scrollTop = chatLog.scrollHeight;
-  }
-
   function syncModelOptions() {
     modelSelect.innerHTML = "";
     if (appMode === "phrase") {
@@ -408,9 +334,7 @@
     thresholdTag.innerHTML = `&tau; = ${thresh}%`;
 
     captureNowBtn.classList.toggle("hidden", !isPhrase);
-    testClipBtn.classList.toggle("hidden", !isPhrase);
     spaceBtn.classList.toggle("hidden", isPhrase);
-    mediaUploadInput.accept = isPhrase ? ".mov,.mp4,.avi,.mkv,video/*" : "image/*";
 
     syncModelOptions();
     lastQuickPickKey = "";
@@ -435,36 +359,9 @@
     triggerConfirmFlash(300);
   }
 
-  async function sendAndSpeak() {
-    const res = await fetch("/api/composer/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: appMode }),
-    });
-    const data = await res.json();
-    if (!res.ok) return;
-    renderComposer(data);
-    renderAutocomplete([]);
-    renderConversation(data.conversation);
-    if (autoSpeakToggle.checked && data.message) {
-      const txt = activeLang === "fil" ? data.message.text_fil : data.message.text_en;
-      speakText(txt);
-    }
-  }
-
-  async function submitListenerReply(text) {
-    const trimmed = (text || "").trim();
-    if (!trimmed) return;
-    const res = await fetch("/api/composer/listener_reply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: trimmed }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      renderConversation(data.conversation);
-      listenerInput.value = "";
-    }
+  function speakComposerOutput() {
+    const txt = activeLang === "fil" ? latestComposer.formatted_fil : latestComposer.formatted_en;
+    speakText(txt);
   }
 
   function scheduleNextTick(gen, delayMs) {
@@ -662,7 +559,7 @@
       setStatus("Camera Active", "status-ok");
       scheduleNextTick(myGen, 60);
     } catch (err) {
-      setStatus("Camera unavailable — use Test Clip or Upload", "status-warn");
+      setStatus("Camera permission denied or unavailable", "status-warn");
       alert("Could not access webcam: " + err.message);
     }
   }
@@ -696,61 +593,20 @@
     fetch("/api/composer/reset_phrase_capture", { method: "POST" }).catch(() => {});
   }
 
-  async function runPhraseVideoSample(samplePath, groundTruth) {
-    testClipPopover.classList.add("hidden");
-    setStatus(`Analyzing ${groundTruth || "clip"}...`, "status-ok");
-    const res = await fetch("/api/predict_phrase_video", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sample_path: samplePath, model: modelSelect.value, append: true }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setStatus(data.error || "Failed", "status-warn");
-      return;
-    }
-    const top1 = data.top1;
-    renderTop3((data.top5 || []).slice(0, 3), cfg.phraseThreshold);
-    if (top1) {
-      detectedLetter.textContent = top1.label;
-      const gtTag = data.ground_truth ? ` (True: ${data.ground_truth})` : "";
-      detectedSub.textContent = `${Math.round(top1.prob * 100)}%${gtTag}`;
-      detectedBox.classList.add("confirmed-flash");
-      setTimeout(() => detectedBox.classList.remove("confirmed-flash"), 400);
-    }
-    renderComposer(data);
-    latencyHud.textContent = `Latency: ${data.latency_ms} ms`;
-    setStatus(`Matched: ${top1 ? top1.label : "Done"}`, "status-ok");
-  }
-
   async function loadCatalogAndChat() {
     try {
       const [catRes, convRes] = await Promise.all([fetch("/api/fsl105/catalog"), fetch("/api/conversation")]);
       if (catRes.ok) {
         catalogData = await catRes.json();
         populateSignGuide();
-        populateTestClips();
       }
       if (convRes.ok) {
         const cdata = await convRes.json();
         renderComposer(cdata);
-        renderConversation(cdata.conversation);
       }
     } catch (err) {
       console.warn("Catalog/chat init error:", err);
     }
-  }
-
-  function populateTestClips() {
-    testClipList.innerHTML = "";
-    (catalogData.test_samples || []).forEach((s) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "test-clip-item";
-      btn.innerHTML = `<span>${s.label}</span><span class="test-clip-cat">${s.category}</span>`;
-      btn.addEventListener("click", () => runPhraseVideoSample(s.vid_path, s.label));
-      testClipList.appendChild(btn);
-    });
   }
 
   function populateSignGuide() {
@@ -837,7 +693,6 @@
     langBadgeText.textContent = activeLang.toUpperCase();
     composerHint.textContent = activeLang === "fil" ? "Natural FIL output" : "Natural EN output";
     renderComposer({});
-    renderConversation(latestConversation);
   });
 
   stageMirrorBtn.addEventListener("click", () => {
@@ -858,65 +713,7 @@
     }
   });
 
-  testClipBtn.addEventListener("click", () => testClipPopover.classList.toggle("hidden"));
-  closeTestClipBtn.addEventListener("click", () => testClipPopover.classList.add("hidden"));
-
-  uploadBtn.addEventListener("click", () => mediaUploadInput.click());
-  mediaUploadInput.addEventListener("change", async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    if (running) stopCamera();
-
-    if (appMode === "phrase") {
-      setStatus("Analyzing uploaded video...", "status-ok");
-      const fd = new FormData();
-      fd.append("video", file);
-      fd.append("model", modelSelect.value);
-      fd.append("append", "true");
-      const res = await fetch("/api/predict_phrase_video", { method: "POST", body: fd });
-      const data = await res.json();
-      if (res.ok) {
-        renderTop3((data.top5 || []).slice(0, 3), cfg.phraseThreshold);
-        if (data.top1) {
-          detectedLetter.textContent = data.top1.label;
-          detectedSub.textContent = `${Math.round(data.top1.prob * 100)}%`;
-        }
-        renderComposer(data);
-        latencyHud.textContent = `Latency: ${data.latency_ms} ms`;
-        setStatus(`Uploaded: ${data.top1 ? data.top1.label : "Done"}`, "status-ok");
-      } else {
-        setStatus(data.error || "Video error", "status-warn");
-      }
-    } else {
-      const img = new Image();
-      img.onload = async () => {
-        placeholder.style.display = "none";
-        captureCtx.fillStyle = "#090d12";
-        captureCtx.fillRect(0, 0, captureCanvas.width, captureCanvas.height);
-        const s = Math.min(captureCanvas.width / img.width, captureCanvas.height / img.height);
-        captureCtx.drawImage(img, (captureCanvas.width - img.width * s) / 2, (captureCanvas.height - img.height * s) / 2, img.width * s, img.height * s);
-        const res = await fetch("/api/predict", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: captureCanvas.toDataURL("image/jpeg", 0.92), model: modelSelect.value, clahe: claheToggle.checked, auto_clahe: autoClaheToggle.checked, auto_space: false }),
-        });
-        const data = await res.json();
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
-        ctx.drawImage(captureCanvas, 0, 0, overlay.width, overlay.height);
-        if (skeletonToggle.checked) drawHandPoints(data.landmarks, "#38bdf8");
-        renderTop3(data.top3 || [], cfg.confidenceThreshold);
-        detectedLetter.textContent = data.raw_label || "—";
-        renderComposer(data);
-        renderAutocomplete(data.suggestions || []);
-        setStatus(data.hand_detected ? "Image Evaluated" : "No hand detected", data.hand_detected ? "status-ok" : "status-warn");
-        URL.revokeObjectURL(img.src);
-      };
-      img.src = URL.createObjectURL(file);
-    }
-    mediaUploadInput.value = "";
-  });
-
-  sendSpeakBtn.addEventListener("click", sendAndSpeak);
+  sendSpeakBtn.addEventListener("click", speakComposerOutput);
   spaceBtn.addEventListener("click", async () => {
     const res = await fetch("/api/buffer/space", { method: "POST" });
     renderComposer(await res.json());
@@ -934,55 +731,6 @@
     renderComposer(await res.json());
     renderAutocomplete([]);
   });
-
-  listenerReplyForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    submitListenerReply(listenerInput.value);
-  });
-  document.querySelectorAll(".quick-reply-chip").forEach((btn) => {
-    btn.addEventListener("click", () => submitListenerReply(btn.dataset.reply));
-  });
-
-  resetChatBtn.addEventListener("click", async () => {
-    const res = await fetch("/api/composer/reset_chat", { method: "POST" });
-    const data = await res.json();
-    renderConversation(data.conversation);
-  });
-
-  exportChatBtn.addEventListener("click", () => {
-    if (!latestConversation.length) return;
-    const lines = latestConversation.map((m) =>
-      `[${m.timestamp}] ${m.sender === "signer" ? "FSL Signer" : "Listener"}: ${m.sender === "signer" ? m.text_en : m.text}`
-    );
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "kumpas_conversation.txt";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-
-  // Web Speech API Microphone for Hearing Listener
-  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRec) {
-    micReplyBtn.title = "Voice-to-text requires Chrome/Edge Web Speech API";
-    micReplyBtn.style.opacity = "0.55";
-  } else {
-    const rec = new SpeechRec();
-    rec.lang = "en-US";
-    rec.interimResults = false;
-    rec.onstart = () => micReplyBtn.classList.add("is-listening");
-    rec.onend = () => micReplyBtn.classList.remove("is-listening");
-    rec.onresult = (ev) => {
-      const transcript = ev.results[0][0].transcript;
-      listenerInput.value = transcript;
-      submitListenerReply(transcript);
-    };
-    micReplyBtn.addEventListener("click", () => {
-      rec.lang = activeLang === "fil" ? "fil-PH" : "en-US";
-      try { rec.start(); } catch {}
-    });
-  }
 
   // Sign Guide & A-Z Reference Modal
   openSignGuideBtn.addEventListener("click", () => signGuideModal.classList.remove("hidden"));

@@ -294,7 +294,7 @@ def api_predict_phrase_frame():
             _last_top3_phrase = list(top3)
             if state.capture_state == "finalized" and top3:
                 just_confirmed = _phrase_processor.try_commit_prediction(
-                    top3[0], now_mono, bypass_threshold=manual_capture
+                    top3[0], now_mono, bypass_threshold=True
                 )
         elif state.capture_state == "idle" and not overlay["has_hands"]:
             top3 = []
@@ -573,8 +573,8 @@ def api_fsl105_video(class_id: int):
     clips = sorted(p for p in clip_dir.iterdir() if p.suffix.lower() in {".mov", ".mp4"})
     if not clips:
         return jsonify({"error": "No clip found"}), 404
-    mime = "video/mp4" if clips[0].suffix.lower() == ".mp4" else "video/quicktime"
-    return send_file(clips[0], mimetype=mime)
+    mime = "video/mp4" if clips[0].suffix.lower() in {".mp4", ".mov"} else "application/octet-stream"
+    return send_file(clips[0], mimetype=mime, conditional=True)
 
 
 @app.route("/api/reference/<letter>")

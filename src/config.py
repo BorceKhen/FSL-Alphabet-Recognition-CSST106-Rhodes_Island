@@ -37,6 +37,7 @@ _fsl105_candidates = (
     Path(_env_fsl105_dir).expanduser() if _env_fsl105_dir else None,
     DATA_DIR / "FSL-105 A dataset for recognizing 105 Filipino sign language videos",
     PROJECT_ROOT / "FSL-105 A dataset for recognizing 105 Filipino sign language videos",
+    DATA_DIR if (DATA_DIR / "clips").is_dir() else None,
 )
 FSL105_DIR = next(
     (path for path in _fsl105_candidates if path is not None and path.is_dir()),
@@ -53,7 +54,7 @@ FSL105_NUM_CLASSES = 105
 FSL105_SEQ_LEN = 40
 FSL105_FEATURE_DIM = 293  # 15*3 pose + 21*3 lh_body + 21*3 rh_body + 20*3 lh_local + 20*3 rh_local + 2 flags
 
-PHRASE_CONFIDENCE_THRESHOLD = 0.55
+PHRASE_CONFIDENCE_THRESHOLD = 0.35
 PHRASE_MIN_ACTIVE_FRAMES = 8
 PHRASE_MAX_BUFFER_FRAMES = 48
 PHRASE_IDLE_END_SECONDS = 0.55

@@ -12,7 +12,7 @@
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
     crossorigin="anonymous"
   />
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=10) }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=12) }}" />
 </head>
 <body>
   <div class="app-viewport container-fluid">
@@ -89,7 +89,6 @@
           </div>
 
           <input type="checkbox" id="mirrorToggle" class="visually-hidden" checked />
-          <input type="file" id="mediaUploadInput" class="visually-hidden" accept=".mov,.mp4,.avi,.mkv,video/*" />
         </aside>
 
         <main class="workspace-container">
@@ -102,7 +101,7 @@
 
                 <div class="camera-placeholder" id="cameraPlaceholder">
                   <div class="placeholder-hint">
-                    <span>Start the camera, upload a clip, or click <strong>Test Clip</strong> to communicate</span>
+                    <span>Click the camera button below to communicate</span>
                   </div>
                 </div>
 
@@ -175,36 +174,6 @@
                     class="stage-pill-btn"
                     title="Capture & classify active sign immediately"
                   >Capture Sign</button>
-
-                  <button
-                    type="button"
-                    id="uploadBtn"
-                    class="circle-icon-btn circle-btn-md"
-                    title="Upload sign video (.MOV/.mp4) or image"
-                    aria-label="Upload Sign Video or Image"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                  </button>
-
-                  <button
-                    type="button"
-                    id="testClipBtn"
-                    class="stage-pill-btn stage-pill-accent"
-                    title="Test recognition on held-out FSL-105 evaluation videos"
-                  >Test Clip</button>
-                </div>
-
-                <!-- Held-out Test Clip Picker Popover -->
-                <div id="testClipPopover" class="test-clip-popover hidden" role="dialog" aria-label="Held-out FSL-105 Test Clips">
-                  <div class="d-flex align-items-center justify-content-between mb-2">
-                    <strong class="small">Held-Out FSL-105 Test Clips</strong>
-                    <button type="button" id="closeTestClipBtn" class="btn-close-sm" aria-label="Close">&times;</button>
-                  </div>
-                  <div id="testClipList" class="test-clip-list"></div>
                 </div>
               </div>
             </section>
@@ -231,7 +200,7 @@
                       <div class="top3-row is-leader" data-rank="0">
                         <span class="top3-char">—</span>
                         <div class="bar-track threshold-track">
-                          <span class="threshold-line" style="left: {{ phrase_threshold }}%"></span>
+                          <span class="threshold-line" style="left: 0%"></span>
                           <div class="bar-fill" style="width: 0%"></div>
                         </div>
                         <span class="top3-pct">0%</span>
@@ -239,7 +208,7 @@
                       <div class="top3-row" data-rank="1">
                         <span class="top3-char">—</span>
                         <div class="bar-track threshold-track">
-                          <span class="threshold-line" style="left: {{ phrase_threshold }}%"></span>
+                          <span class="threshold-line" style="left: 0%"></span>
                           <div class="bar-fill" style="width: 0%"></div>
                         </div>
                         <span class="top3-pct">0%</span>
@@ -247,7 +216,7 @@
                       <div class="top3-row" data-rank="2">
                         <span class="top3-char">—</span>
                         <div class="bar-track threshold-track">
-                          <span class="threshold-line" style="left: {{ phrase_threshold }}%"></span>
+                          <span class="threshold-line" style="left: 0%"></span>
                           <div class="bar-fill" style="width: 0%"></div>
                         </div>
                         <span class="top3-pct">0%</span>
@@ -258,7 +227,7 @@
                 </div>
 
                 <!-- 2. Active Message Composer -->
-                <div class="panel-white-card composer-card">
+                <div class="panel-white-card composer-card d-flex flex-column flex-grow-1">
                   <div class="d-flex align-items-center justify-content-between mb-1">
                     <span class="panel-card-title">Signer Message Composer</span>
                     <span id="composerHint" class="threshold-tag">Natural EN output</span>
@@ -266,63 +235,19 @@
 
                   <div id="composerTokens" class="composer-tokens"></div>
 
-                  <div id="naturalPreview" class="natural-preview" aria-live="polite">
+                  <div id="naturalPreview" class="natural-preview flex-grow-1" aria-live="polite">
                     <span class="text-placeholder-inline">Sign phrases or spell words to compose a natural message...</span>
                   </div>
 
                   <div id="autocompleteRow" class="autocomplete-row hidden"></div>
 
                   <div class="composer-actions mt-2">
-                    <button type="button" id="sendSpeakBtn" class="action-pill-btn action-pill-primary">Send &amp; Speak</button>
+                    <button type="button" id="sendSpeakBtn" class="action-pill-btn action-pill-primary">Speak</button>
                     <button type="button" id="spaceBtn" class="action-pill-btn hidden" data-action="space">Space</button>
                     <button type="button" id="undoBtn" class="action-pill-btn">Undo</button>
                     <button type="button" id="clearComposerBtn" class="action-pill-btn">Clear</button>
                     <button type="button" id="showCardInlineBtn" class="action-pill-btn">Card</button>
                   </div>
-                </div>
-
-                <!-- 3. Two-Way Conversation Bridge (Deaf <-> Hearing) -->
-                <div class="panel-white-card bridge-card d-flex flex-column flex-grow-1">
-                  <div class="d-flex align-items-center justify-content-between mb-1">
-                    <span class="panel-card-title">Two-Way Conversation</span>
-                    <div class="d-flex gap-1">
-                      <button type="button" id="exportChatBtn" class="mini-ghost-btn" title="Download conversation transcript">Export</button>
-                      <button type="button" id="resetChatBtn" class="mini-ghost-btn" title="Clear conversation">Reset</button>
-                    </div>
-                  </div>
-
-                  <div id="chatLog" class="chat-log flex-grow-1" aria-live="polite">
-                    <div class="chat-empty">
-                      Signed messages appear here and speak aloud. The hearing person can speak or type replies below.
-                    </div>
-                  </div>
-
-                  <div class="quick-replies-row">
-                    <button type="button" class="quick-reply-chip" data-reply="Yes">Yes</button>
-                    <button type="button" class="quick-reply-chip" data-reply="No">No</button>
-                    <button type="button" class="quick-reply-chip" data-reply="Wait a moment">Wait</button>
-                    <button type="button" class="quick-reply-chip" data-reply="Please repeat">Repeat</button>
-                    <button type="button" class="quick-reply-chip" data-reply="How can I help you?">Help?</button>
-                  </div>
-
-                  <form id="listenerReplyForm" class="listener-reply-bar">
-                    <button type="button" id="micReplyBtn" class="mic-btn" title="Hearing person: speak reply (Voice to Text)">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                        <line x1="12" y1="19" x2="12" y2="23" />
-                        <line x1="8" y1="23" x2="16" y2="23" />
-                      </svg>
-                    </button>
-                    <input
-                      type="text"
-                      id="listenerInput"
-                      class="listener-input"
-                      placeholder="Hearing person: type or speak reply..."
-                      autocomplete="off"
-                    />
-                    <button type="submit" class="listener-send-btn">Reply</button>
-                  </form>
                 </div>
               </div>
             </section>
@@ -490,6 +415,6 @@
       hasPhraseSvm: configEl.dataset.hasPhraseSvm === "true"
     };
   </script>
-  <script src="{{ url_for('static', filename='app.js', v=10) }}"></script>
+  <script src="{{ url_for('static', filename='app.js', v=12) }}"></script>
 </body>
 </html>
